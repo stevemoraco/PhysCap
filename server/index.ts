@@ -1,8 +1,11 @@
 import express, { type Request, Response, NextFunction } from "express";
+import { createServer } from "http";
 import { registerRoutes } from "./routes";
+import { setupAuth } from "./replitAuth";
 import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();
+const server = createServer(app);
 
 declare module 'http' {
   interface IncomingMessage {
@@ -47,7 +50,11 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  const server = await registerRoutes(app);
+  // Setup Replit Auth
+  await setupAuth(app);
+  
+  // Register API routes
+  registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
@@ -71,11 +78,7 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || '5000', 10);
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
+  server.listen(port, "0.0.0.0", () => {
     log(`serving on port ${port}`);
   });
 })();

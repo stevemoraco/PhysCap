@@ -1,7 +1,7 @@
 import { Link } from "wouter";
 import { GoldButton } from "./GoldButton";
 import { useAuth } from "@/hooks/useAuth";
-import logoUrl from "@assets/51BCA963-A91C-41DE-B636-0BFA554C5787_1762447211277.PNG";
+import { Gem } from "lucide-react";
 
 export function Navigation() {
   const { isAuthenticated, user } = useAuth();
@@ -9,13 +9,15 @@ export function Navigation() {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-primary/10">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-        <Link href="/">
-          <a className="flex items-center gap-3 hover-elevate transition-all duration-300" data-testid="link-logo">
-            <img src={logoUrl} alt="Physical.Capital" className="h-10 w-10 object-contain" />
+        <Link href="/" data-testid="link-logo">
+          <div className="flex items-center gap-3 hover-elevate transition-all duration-300 cursor-pointer">
+            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Gem className="w-6 h-6 text-primary" />
+            </div>
             <span className="font-serif text-xl font-bold text-foreground hidden sm:inline">
               Physical.Capital
             </span>
-          </a>
+          </div>
         </Link>
 
         <div className="flex items-center gap-6">

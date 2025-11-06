@@ -1,3 +1,4 @@
+// Database connection using Neon serverless - Required for Replit Auth
 import { Pool, neonConfig } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
 import ws from "ws";

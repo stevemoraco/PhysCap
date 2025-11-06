@@ -8,7 +8,7 @@ import { ProjectTavakiev } from "@/components/ProjectTavakiev";
 import { ProjectShowcase } from "@/components/ProjectShowcase";
 import { InnovationsSection } from "@/components/InnovationsSection";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Sparkles, FileText, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { PageInteraction, UserReport } from "@shared/schema";
@@ -54,6 +54,9 @@ export default function Home() {
       return response;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/reports/latest', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['/api/feedback', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['/api/interactions', user?.id] });
       toast({
         title: "Report Generated!",
         description: "Your personalized investment report has been created and sent to your email.",

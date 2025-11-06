@@ -59,7 +59,8 @@ export default function Dashboard() {
         title: "Report Generated Successfully",
         description: "Your personalized investment report has been sent to your email!",
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/reports/latest'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/reports/latest', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['/api/feedback', user?.id] });
     },
     onError: (error: Error) => {
       toast({

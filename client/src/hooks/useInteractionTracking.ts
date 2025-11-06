@@ -1,7 +1,7 @@
 import { useEffect, useCallback, useRef } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
-import type { InsertPageInteraction, InsertInteractionEvent } from '@shared/schema';
+import type { InsertPageInteraction } from '@shared/schema';
 
 interface InteractionEvent {
   eventType: string;
@@ -9,9 +9,13 @@ interface InteractionEvent {
   payload?: any;
 }
 
+const BATCH_SIZE = 10;
+const FLUSH_INTERVAL = 20000;
+
 export function useInteractionTracking(userId: string | undefined) {
   const eventBuffer = useRef<InteractionEvent[]>([]);
   const sectionObservers = useRef<Map<string, IntersectionObserver>>(new Map());
+  const isFlushing = useRef(false);
 
   const { mutate } = useMutation({
     mutationFn: async (data: Omit<InsertPageInteraction, 'userId'>) => {
@@ -20,38 +24,59 @@ export function useInteractionTracking(userId: string | undefined) {
     },
   });
 
-  // Batch send interaction events
-  const sendBatch = useCallback(async (events: InteractionEvent[]) => {
-    if (!userId || events.length === 0) return;
+  const sendBatch = useCallback(async () => {
+    if (!userId || isFlushing.current) return;
+    if (eventBuffer.current.length === 0) return;
+
+    const eventsToSend = eventBuffer.current.splice(0, eventBuffer.current.length);
+    isFlushing.current = true;
 
     try {
-      await apiRequest('POST', '/api/interactions/batch', { events });
-      eventBuffer.current = [];
+      await apiRequest('POST', '/api/interactions/batch', { events: eventsToSend });
     } catch (error) {
       console.error('Failed to send interaction batch:', error);
+      eventBuffer.current.unshift(...eventsToSend);
+    } finally {
+      isFlushing.current = false;
     }
   }, [userId]);
 
-  // Batch send every 30 seconds
   useEffect(() => {
+    if (!userId) return;
     const interval = setInterval(() => {
-      if (eventBuffer.current.length > 0) {
-        sendBatch([...eventBuffer.current]);
-      }
-    }, 30000);
+      sendBatch();
+    }, FLUSH_INTERVAL);
 
-    // Send on unmount
-    return () => {
-      clearInterval(interval);
+    const handleBeforeUnload = () => {
       if (eventBuffer.current.length > 0) {
-        sendBatch([...eventBuffer.current]);
+        navigator.sendBeacon?.(
+          '/api/interactions/batch',
+          JSON.stringify({ events: eventBuffer.current }),
+        );
+        eventBuffer.current = [];
       }
     };
-  }, [sendBatch]);
 
-  const addEvent = useCallback((event: InteractionEvent) => {
-    eventBuffer.current.push(event);
-  }, []);
+    window.addEventListener('pagehide', handleBeforeUnload);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('pagehide', handleBeforeUnload);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      sendBatch();
+    };
+  }, [userId, sendBatch]);
+
+  const addEvent = useCallback(
+    (event: InteractionEvent) => {
+      eventBuffer.current.push(event);
+      if (eventBuffer.current.length >= BATCH_SIZE) {
+        void sendBatch();
+      }
+    },
+    [sendBatch],
+  );
 
   const trackInteraction = useCallback((
     pagePath: string,

@@ -1,0 +1,16 @@
+
+
+- Project Tavakiev: a Solar Panel manufacturing at 1615 Garden of the Gods Rd (the old intel plant)
+- The Tabeguache Collection: the Acquisition & Development of a Colorado Resort & Experiences Company (Gateway Canyons, Antlers, Union Printers Home)
+- Venustas Tower: Construction of the tallest skyscraper in the world with the highest viewing platform, and an outdoor staircase up the outside of it, with heated year-round hanging gardens in the appartment balconies on the way up
+- Yádiłhił: The first orbital appartment complex, manufactured in Colorado, launched from a Starship pad in the Colorado Space Facility near Denver
+
+These will be enabled by these core innovations that we do in-house, and apply to all our projects:
+- Golden Spike: Innovation in supply chain verticalization and centralization, sourcing all raw materials here in Colorado as much as possible, with autonomous shipping with Tesla trucks to datacenters and solar sites making use of eastern colorado to power a 10x increase in the total power production of the united states over the next 3-5 years
+- Project Vitruvius: Innovation in pre-fab construction for buildings like our resorts & tower
+- Project Talos: Innovation in manufacturing & construction with autonomous robots like Optimus, Figure, Etc
+- Story Engineering, powered by DATA, our in-house AI platform that autonomously engages stakeholders, designs, markets, and sells all of the visual media, assets, and the stories behind our projects, works with every individual in every affected community to understand how the project will benefit them.
+
+I've attached a business plan for each of these, would you please scope out a site that will make a VISUAL, INTERACTIVE DEMONSTRATION of each project using three.js and GPU rendering technologies that make this all beauitful and easy to appreciate on a phone?
+
+The colors of the site should be luxiurious dark blue-green that we can accent with dyed leather imagery, and gold inlays and insets, all elements on the site should be golden and animate when you move your phone to shine, glisten, and glimmer photorealistically in direct sunlight. I've attached our logo for Physical Capital which is a tree-shaped Cairn made of solid gold.

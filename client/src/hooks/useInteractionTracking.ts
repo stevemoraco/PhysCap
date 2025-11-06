@@ -1,10 +1,10 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import type { InsertPageInteraction } from '@shared/schema';
 
 export function useInteractionTracking(userId: string | undefined) {
-  const trackMutation = useMutation({
+  const { mutate } = useMutation({
     mutationFn: async (data: Omit<InsertPageInteraction, 'userId'>) => {
       if (!userId) return;
       await apiRequest('POST', '/api/interactions', { ...data, userId });
@@ -18,25 +18,35 @@ export function useInteractionTracking(userId: string | undefined) {
     duration?: number,
     metadata?: any
   ) => {
-    trackMutation.mutate({
+    if (!userId) return;
+    mutate({
       pagePath,
       sectionId,
       interactionType,
       duration,
       metadata,
     });
-  }, [trackMutation]);
+  }, [userId, mutate]);
 
   const trackPageVisit = useCallback((pagePath: string) => {
+    if (!userId) return () => {};
+    
     const startTime = Date.now();
     
-    trackInteraction(pagePath, 'visit');
+    mutate({
+      pagePath,
+      interactionType: 'visit',
+    });
 
     return () => {
       const duration = Math.floor((Date.now() - startTime) / 1000);
-      trackInteraction(pagePath, 'exit', undefined, duration);
+      mutate({
+        pagePath,
+        interactionType: 'exit',
+        duration,
+      });
     };
-  }, [trackInteraction]);
+  }, [userId, mutate]);
 
   return { trackInteraction, trackPageVisit };
 }

@@ -3,6 +3,11 @@
 ## Overview
 Physical.Capital embodies luxury, innovation, and sophistication through a carefully crafted design system inspired by high-end investment platforms and premium brand experiences. The aesthetic combines deep blue-green tones reminiscent of precious minerals with metallic gold accents suggesting wealth and exclusivity.
 
+### Brand Assets
+- **Primary Logo**: `client/public/physical-capital-logo.png` (sourced from Physical.Capital golden cairn mark). Access via `BRAND.logoSrc` in `client/src/lib/brand.ts`.
+- **Favicon**: `client/public/favicon.png` mirrors the primary logo for consistent presentation.
+- **Brand Constants**: Import `BRAND` from `@/lib/brand` when you need the canonical name, alt text, or logo path to keep usage consistent across features.
+
 ## Design Philosophy
 - **Luxurious & Professional**: Evoke trust and premium quality through refined aesthetics
 - **Mobile-First & Interactive**: Gyroscope-responsive effects create immersive experiences

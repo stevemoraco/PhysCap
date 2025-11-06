@@ -6,6 +6,7 @@ import { TabeguacheResort3D } from "./TabeguacheResort3D";
 import { VenustasTower3D } from "./VenustasTower3D";
 import { YadilhilOrbital3D } from "./YadilhilOrbital3D";
 import { Building2, Rocket, Hotel } from "lucide-react";
+import { usePersonalization } from "@/hooks/usePersonalization";
 
 interface Project {
   id: string;
@@ -15,6 +16,8 @@ interface Project {
   icon: React.ReactNode;
   status: string;
   visualType: 'resort' | 'tower' | 'orbital';
+  ctaLabel: string;
+  personalizationHint: string;
 }
 
 const projects: Project[] = [
@@ -26,6 +29,8 @@ const projects: Project[] = [
     icon: <Hotel className="w-6 h-6" />,
     status: "Planning Phase",
     visualType: 'resort',
+    ctaLabel: "Design the Tabeguache Collection",
+    personalizationHint: "We’re curating alpine experiences with prefab speed—bring your hospitality playbook.",
   },
   {
     id: "venustas",
@@ -35,6 +40,8 @@ const projects: Project[] = [
     icon: <Building2 className="w-6 h-6" />,
     status: "Design Phase",
     visualType: 'tower',
+    ctaLabel: "Join the Venustas design council",
+    personalizationHint: "Your structural insight unlocks heated sky gardens and outdoor ascent experiences.",
   },
   {
     id: "yadilhil",
@@ -44,11 +51,14 @@ const projects: Project[] = [
     icon: <Rocket className="w-6 h-6" />,
     status: "Concept Development",
     visualType: 'orbital',
+    ctaLabel: "Advise the orbital launch collective",
+    personalizationHint: "Orbital habitats demand cross-disciplinary leadership—lend your voice to the founding cohort.",
   },
 ];
 
 export function ProjectShowcase() {
   const [activeFeedback, setActiveFeedback] = useState<{ id: string; name: string } | null>(null);
+  const { getPersonalizedText } = usePersonalization();
 
   return (
     <>
@@ -61,9 +71,39 @@ export function ProjectShowcase() {
           >
             {/* 3D Visualization */}
             <div className="relative h-48 bg-gradient-to-br from-card to-primary/10 border-b border-primary/20">
-              {project.visualType === 'resort' && <TabeguacheResort3D className="w-full h-full" />}
-              {project.visualType === 'tower' && <VenustasTower3D className="w-full h-full" />}
-              {project.visualType === 'orbital' && <YadilhilOrbital3D className="w-full h-full" />}
+              {project.visualType === 'resort' && (
+                <TabeguacheResort3D
+                  className="w-full h-full"
+                  ctaLabel={project.ctaLabel}
+                  personalizationHint={getPersonalizedText(
+                    `projects.${project.id}.hint`,
+                    project.personalizationHint,
+                  )}
+                  onExpressInterest={() => setActiveFeedback({ id: project.id, name: project.name })}
+                />
+              )}
+              {project.visualType === 'tower' && (
+                <VenustasTower3D
+                  className="w-full h-full"
+                  ctaLabel={project.ctaLabel}
+                  personalizationHint={getPersonalizedText(
+                    `projects.${project.id}.hint`,
+                    project.personalizationHint,
+                  )}
+                  onExpressInterest={() => setActiveFeedback({ id: project.id, name: project.name })}
+                />
+              )}
+              {project.visualType === 'orbital' && (
+                <YadilhilOrbital3D
+                  className="w-full h-full"
+                  ctaLabel={project.ctaLabel}
+                  personalizationHint={getPersonalizedText(
+                    `projects.${project.id}.hint`,
+                    project.personalizationHint,
+                  )}
+                  onExpressInterest={() => setActiveFeedback({ id: project.id, name: project.name })}
+                />
+              )}
               {/* Info overlay */}
               <div className="absolute top-3 right-3 bg-card/90 backdrop-blur-sm px-2 py-1 rounded text-xs text-primary border border-primary/20">
                 Interactive 3D
@@ -98,7 +138,7 @@ export function ProjectShowcase() {
                 className="w-full"
                 icon="sparkle"
               >
-                Express Interest
+                {getPersonalizedText(`projects.${project.id}.cta`, "Express Interest")}
               </GoldButton>
             </div>
           </Card>

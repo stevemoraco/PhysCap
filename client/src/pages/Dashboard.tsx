@@ -4,18 +4,29 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { GoldButton } from "@/components/GoldButton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Sparkles, Mail, Clock, Eye } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Loader2, Sparkles, Mail, Clock, Eye, Settings, TrendingUp, MessageSquare, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { SEOHead } from "@/components/SEOHead";
-import type { User, Feedback, PageInteraction, UserReport } from "@shared/schema";
+import { ProfileOnboardingModal } from "@/components/onboarding/ProfileOnboardingModal";
+import { VoiceCaptureModal } from "@/components/feedback/VoiceCaptureModal";
+import { usePersonalization } from "@/hooks/usePersonalization";
+import { PersonalizationEngine } from "@/lib/PersonalizationEngine";
+import { useState } from "react";
+import type { User, Feedback, PageInteraction, UserReport, UserProfile, FeedbackTranscript, InteractionEvent } from "@shared/schema";
 
 export default function Dashboard() {
   const { toast } = useToast();
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showVoiceModal, setShowVoiceModal] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<string>('tavakiev');
 
   const { data: user, isLoading: userLoading } = useQuery<User>({
     queryKey: ['/api/auth/user'],
   });
+
+  const { profile, showOnboarding, setShowOnboarding } = usePersonalization();
 
   const { data: feedback, isLoading: feedbackLoading } = useQuery<Feedback[]>({
     queryKey: ['/api/feedback', user?.id],
@@ -45,6 +56,28 @@ export default function Dashboard() {
       if (!user?.id) return [];
       const response = await fetch(`/api/interactions/${user.id}`);
       if (!response.ok) throw new Error('Failed to fetch interactions');
+      return response.json();
+    },
+    enabled: !!user?.id,
+  });
+
+  const { data: transcripts } = useQuery<FeedbackTranscript[]>({
+    queryKey: ['/api/feedback/transcripts', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const response = await fetch(`/api/feedback/transcripts/${user.id}`);
+      if (!response.ok) return [];
+      return response.json();
+    },
+    enabled: !!user?.id,
+  });
+
+  const { data: allReports } = useQuery<UserReport[]>({
+    queryKey: ['/api/reports', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const response = await fetch(`/api/reports/${user.id}`);
+      if (!response.ok) return [];
       return response.json();
     },
     enabled: !!user?.id,
@@ -144,6 +177,106 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Profile Actions */}
+        <div className="mb-6 flex gap-3">
+          <Button
+            variant="outline"
+            onClick={() => setShowProfileModal(true)}
+            className="flex items-center gap-2"
+          >
+            <Settings className="h-4 w-4" />
+            {profile ? 'Edit Profile' : 'Complete Profile'}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setShowVoiceModal(true)}
+            className="flex items-center gap-2"
+          >
+            <MessageSquare className="h-4 w-4" />
+            Voice Feedback
+          </Button>
+        </div>
+
+        {/* Recommended Projects */}
+        {profile && (
+          <div className="mb-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-primary" />
+                  Recommended for You
+                </CardTitle>
+                <CardDescription>
+                  Based on your expertise in {(profile.expertiseTags || []).slice(0, 3).join(', ')}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {PersonalizationEngine.recommendProjects(profile).slice(0, 3).map((projectId) => (
+                    <Card key={projectId} className="hover-elevate cursor-pointer">
+                      <CardHeader>
+                        <CardTitle className="text-lg capitalize">
+                          {projectId === 'tavakiev' && 'Project Tavakiev'}
+                          {projectId === 'tabeguache' && 'Tabeguache Collection'}
+                          {projectId === 'venustas' && 'Venustas Tower'}
+                          {projectId === 'yadilhil' && 'Yádiłhił Orbital'}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-muted-foreground mb-3">
+                          {projectId === 'tavakiev' && 'Autonomous solar manufacturing gigafactory'}
+                          {projectId === 'tabeguache' && 'Mountain resort and real estate development'}
+                          {projectId === 'venustas' && 'AI-powered infrastructure project'}
+                          {projectId === 'yadilhil' && 'Advanced strategic initiative'}
+                        </p>
+                        <Button variant="outline" size="sm" className="w-full">
+                          Explore Project
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Voice Transcripts */}
+        {transcripts && transcripts.length > 0 && (
+          <div className="mb-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MessageSquare className="h-5 w-5 text-primary" />
+                  Voice Feedback Transcripts
+                </CardTitle>
+                <CardDescription>
+                  Your voice insights have been transcribed and analyzed
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {transcripts.slice(0, 3).map((transcript) => (
+                    <div key={transcript.id} className="p-3 rounded-lg bg-accent/10 border border-accent/20">
+                      <div className="flex items-center justify-between mb-2">
+                        <Badge variant="outline" className="text-xs">
+                          {transcript.projectId}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground">
+                          {transcript.createdAt && formatDistanceToNow(new Date(transcript.createdAt), { addSuffix: true })}
+                        </span>
+                      </div>
+                      <p className="text-sm text-foreground/80 line-clamp-2">
+                        {transcript.transcript}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         <div className="mb-6">
           <Card>
@@ -294,6 +427,25 @@ export default function Dashboard() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Modals */}
+      {user && (
+        <>
+          <ProfileOnboardingModal
+            isOpen={showProfileModal || showOnboarding}
+            onClose={() => {
+              setShowProfileModal(false);
+              setShowOnboarding(false);
+            }}
+            userId={user.id}
+          />
+          <VoiceCaptureModal
+            isOpen={showVoiceModal}
+            onClose={() => setShowVoiceModal(false)}
+            projectId={selectedProject}
+          />
+        </>
+      )}
     </div>
   );
 }

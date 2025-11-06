@@ -1,12 +1,28 @@
 // API routes for Physical.Capital
 import type { Express } from "express";
+import multer from "multer";
 import { isAuthenticated } from "./replitAuth";
 import { storage } from "./storage";
 import { generatePersonalizedReport } from "./openai";
 import { sendInvestmentReport } from "./email";
-import { insertFeedbackSchema, insertPageInteractionSchema } from "@shared/schema";
+import { insertFeedbackSchema, insertPageInteractionSchema, insertInteractionEventSchema, insertUserProfileSchema } from "@shared/schema";
+import { generatePersonalizedReport as generateReport } from "./services/reportGenerator";
+import { processVoiceFeedback } from "./services/voiceTranscription";
+import { generatePersonalizedContent, generateUserCopyBundle } from "./services/personalizationService";
+
+// Configure multer for file uploads
+const upload = multer({ dest: '/tmp/uploads/' });
 
 export function registerRoutes(app: Express) {
+  app.get("/api/tavakiev/sections", async (_req, res) => {
+    try {
+      const sections = await storage.getTavakievSources();
+      res.json(sections);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // Get current authenticated user - Required for Replit Auth
   app.get("/api/auth/user", isAuthenticated, async (req, res) => {
     try {
@@ -188,6 +204,218 @@ export function registerRoutes(app: Express) {
       const reports = await storage.getUserReports(req.params.userId);
       res.json(reports);
     } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // User Profile Management
+  app.get("/api/users/profile/:userId", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as any;
+      if (req.params.userId !== user.claims.sub) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const profile = await storage.getUserProfile(req.params.userId);
+      if (!profile) {
+        return res.status(404).json({ message: "Profile not found" });
+      }
+
+      res.json(profile);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/users/profile", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const userId = user.claims.sub;
+
+      // Update basic user info
+      await storage.upsertUser({
+        id: userId,
+        firstName: req.body.firstName,
+        lastName: req.body.lastName,
+        company: req.body.company,
+        profession: req.body.profession,
+        email: user.claims.email,
+      });
+
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/users/profile/detailed", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const data = insertUserProfileSchema.parse(req.body);
+
+      // Ensure userId matches authenticated user
+      if (data.userId !== user.claims.sub) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const profile = await storage.upsertUserProfile(data);
+      res.json(profile);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  // Batch interaction events
+  app.post("/api/interactions/batch", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const userId = user.claims.sub;
+      const { events } = req.body;
+
+      if (!Array.isArray(events)) {
+        return res.status(400).json({ message: "Events must be an array" });
+      }
+
+      const eventsWithUser = events.map(e => ({
+        ...e,
+        userId,
+      }));
+
+      await storage.createInteractionEvents(eventsWithUser);
+
+      res.json({ success: true, count: events.length });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  // Voice feedback with Whisper transcription
+  app.post("/api/feedback/voice", isAuthenticated, upload.single('audio'), async (req, res) => {
+    try {
+      const user = req.user as any;
+      const userId = user.claims.sub;
+      const { projectId } = req.body;
+      const audioFile = req.file;
+
+      if (!audioFile) {
+        return res.status(400).json({ message: "No audio file provided" });
+      }
+
+      // Process voice feedback (transcribe + extract expertise)
+      const { transcript, expertise, summary } = await processVoiceFeedback(audioFile.path);
+
+      // Store transcript
+      const feedbackTranscript = await storage.createFeedbackTranscript({
+        userId,
+        projectId,
+        transcript,
+        audioUrl: audioFile.path,
+        language: 'en',
+      });
+
+      // Store feedback
+      await storage.createFeedback({
+        userId,
+        projectId,
+        feedbackText: summary || transcript,
+        expertise: expertise.keywords.join(', '),
+      });
+
+      res.json({
+        success: true,
+        transcript,
+        expertise: expertise.keywords,
+      });
+    } catch (error: any) {
+      console.error('Voice feedback error:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Personalization endpoints
+  app.post("/api/personalization/generate", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const userId = user.claims.sub;
+      const { baseContent, context, projectId } = req.body;
+
+      const profile = await storage.getUserProfile(userId);
+      if (!profile) {
+        return res.json({ personalizedContent: baseContent });
+      }
+
+      const personalizedContent = await generatePersonalizedContent(
+        baseContent,
+        profile,
+        context,
+        projectId
+      );
+
+      res.json({ personalizedContent });
+    } catch (error: any) {
+      console.error('Personalization error:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/personalization/copy/:userId", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as any;
+      if (req.params.userId !== user.claims.sub) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const profile = await storage.getUserProfile(req.params.userId);
+      if (!profile) {
+        return res.json({});
+      }
+
+      const copyBundle = await generateUserCopyBundle(req.params.userId, profile);
+      res.json(copyBundle);
+    } catch (error: any) {
+      console.error('Copy bundle error:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Enhanced report generation
+  app.post("/api/reports/generate-v2", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const userId = user.claims.sub;
+
+      const { reportContent, recommendedProjects, insights } = await generateReport(userId);
+
+      // Save report to database
+      const newReport = await storage.createReport({
+        userId,
+        reportContent,
+        recommendedProjects,
+        insights,
+        emailSent: false,
+      });
+
+      // Send email
+      const dbUser = await storage.getUser(userId);
+      if (dbUser?.email) {
+        const userName = [dbUser.firstName, dbUser.lastName]
+          .filter(Boolean)
+          .join(' ') || 'Investor';
+
+        await sendInvestmentReport({
+          to: dbUser.email,
+          userName,
+          reportContent,
+          expertise: insights.behavioralInsights.expertiseShared.join(', ') || 'general',
+          projectsInterested: recommendedProjects,
+        });
+
+        await storage.updateReportEmailStatus(newReport.id, true);
+      }
+
+      res.json({ ...newReport, emailSent: true });
+    } catch (error: any) {
+      console.error('Report generation v2 error:', error);
       res.status(500).json({ message: error.message });
     }
   });

@@ -4,11 +4,11 @@ import { cn } from "@/lib/utils";
 
 interface GoldButtonProps {
   children: React.ReactNode;
-  onClick?: () => void;
+  onClick?: (e?: React.MouseEvent<HTMLButtonElement>) => void;
   variant?: "primary" | "outline";
   className?: string;
   icon?: "arrow" | "sparkle" | "none";
-  size?: "default" | "lg";
+  size?: "default" | "sm" | "lg";
   disabled?: boolean;
   "data-testid"?: string;
 }
@@ -38,6 +38,7 @@ export function GoldButton({
           "hover:shadow-xl hover:shadow-primary/30 hover:scale-105",
           "font-medium tracking-wide",
           size === "lg" && "px-8 py-6 text-lg",
+          size === "sm" && "px-3 py-2 text-xs",
           className
         )}
         data-testid={dataTestId || "button-cta-outline"}
@@ -59,6 +60,7 @@ export function GoldButton({
         "transition-all duration-300 hover:scale-105",
         "border border-primary-border",
         size === "lg" && "px-8 py-6 text-lg",
+        size === "sm" && "px-3 py-2 text-xs",
         className
       )}
       size={size}

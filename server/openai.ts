@@ -1,5 +1,6 @@
 // OpenAI integration using Replit AI Integrations
 import OpenAI from "openai";
+import fs from "fs";
 
 // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
 // This is using Replit's AI Integrations service, which provides OpenAI-compatible API access without requiring your own OpenAI API key.
@@ -7,6 +8,80 @@ const openai = new OpenAI({
   baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY
 });
+
+/**
+ * Transcribe audio using Whisper
+ */
+export async function transcribeAudioWithWhisper(audioPath: string): Promise<string> {
+  try {
+    const transcription = await openai.audio.transcriptions.create({
+      file: fs.createReadStream(audioPath),
+      model: 'whisper-1',
+      language: 'en',
+      response_format: 'text',
+    });
+
+    return transcription as unknown as string;
+  } catch (error) {
+    console.error('Whisper transcription error:', error);
+    throw new Error('Failed to transcribe audio');
+  }
+}
+
+/**
+ * Generate content with GPT-4o-mini
+ */
+export async function generateContentWithGPT4oMini(
+  prompt: string,
+  options?: {
+    temperature?: number;
+    maxTokens?: number;
+    jsonMode?: boolean;
+  }
+): Promise<string> {
+  try {
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: options?.temperature || 0.7,
+      max_completion_tokens: options?.maxTokens || 1000,
+      ...(options?.jsonMode && { response_format: { type: 'json_object' } }),
+    });
+
+    return response.choices[0]?.message?.content || '';
+  } catch (error) {
+    console.error('GPT-4o-mini error:', error);
+    throw new Error('Failed to generate content');
+  }
+}
+
+/**
+ * Extract structured data using GPT-4o-mini with JSON mode
+ */
+export async function extractStructuredData<T = any>(
+  prompt: string,
+  schema?: string
+): Promise<T> {
+  try {
+    const fullPrompt = schema
+      ? `${prompt}\n\nReturn JSON with this structure:\n${schema}`
+      : prompt;
+
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [{ role: 'user', content: fullPrompt }],
+      response_format: { type: 'json_object' },
+      temperature: 0.3,
+      max_completion_tokens: 1000,
+    });
+
+    const content = response.choices[0]?.message?.content || '{}';
+    return JSON.parse(content);
+  } catch (error) {
+    console.error('Structured data extraction error:', error);
+    throw new Error('Failed to extract structured data');
+  }
+}
 
 export async function generatePersonalizedReport(
   userProfile: {

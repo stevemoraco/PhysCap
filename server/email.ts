@@ -1,4 +1,6 @@
 import { Resend } from 'resend';
+import { renderReportEmail, type ReportEmailProps } from '../client/src/components/email/ReportEmailTemplate';
+import { renderWelcomeEmail, type WelcomeEmailProps } from '../client/src/components/email/WelcomeEmailTemplate';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -10,6 +12,90 @@ export interface InvestmentReportEmail {
   projectsInterested: string[];
 }
 
+// New interface for personalized report
+export interface PersonalizedReportData {
+  userId: string;
+  userEmail: string;
+  userName: string;
+  visitSummary: string;
+  recommendedProjects: Array<{
+    id: string;
+    name: string;
+    description: string;
+    matchScore: number;
+  }>;
+  reportUrl: string;
+  expertise: string;
+}
+
+// Send personalized report with new template
+export async function sendPersonalizedReport(data: PersonalizedReportData): Promise<boolean> {
+  if (!process.env.RESEND_API_KEY) {
+    console.warn('RESEND_API_KEY not configured - skipping email send');
+    return false;
+  }
+
+  try {
+    const emailHtml = renderReportEmail({
+      userName: data.userName,
+      visitSummary: data.visitSummary,
+      recommendedProjects: data.recommendedProjects,
+      reportUrl: data.reportUrl,
+      userEmail: data.userEmail,
+      expertise: data.expertise,
+    });
+
+    const { data: emailData, error } = await resend.emails.send({
+      from: 'Physical.Capital <reports@physical.capital>',
+      to: data.userEmail,
+      subject: 'Your Personalized Investment Insights - Physical.Capital',
+      html: emailHtml,
+    });
+
+    if (error) {
+      console.error('Error sending personalized report:', error);
+      return false;
+    }
+
+    console.log('Personalized report sent successfully:', emailData?.id);
+    return true;
+  } catch (error) {
+    console.error('Failed to send personalized report:', error);
+    return false;
+  }
+}
+
+// Send welcome email
+export async function sendWelcomeEmail(data: WelcomeEmailProps): Promise<boolean> {
+  if (!process.env.RESEND_API_KEY) {
+    console.warn('RESEND_API_KEY not configured - skipping email send');
+    return false;
+  }
+
+  try {
+    const emailHtml = renderWelcomeEmail(data);
+
+    const { data: emailData, error } = await resend.emails.send({
+      from: 'Physical.Capital <welcome@physical.capital>',
+      to: data.userEmail,
+      subject: 'Welcome to Physical.Capital',
+      html: emailHtml,
+    });
+
+    if (error) {
+      console.error('Error sending welcome email:', error);
+      return false;
+    }
+
+    console.log('Welcome email sent successfully:', emailData?.id);
+    return true;
+  } catch (error) {
+    console.error('Failed to send welcome email:', error);
+    return false;
+  }
+}
+
+// Legacy function - kept for backward compatibility
 export async function sendInvestmentReport(data: InvestmentReportEmail): Promise<boolean> {
   if (!process.env.RESEND_API_KEY) {
     console.warn('RESEND_API_KEY not configured - skipping email send');

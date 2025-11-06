@@ -1,12 +1,22 @@
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { useDeviceOrientation } from '@/hooks/useDeviceOrientation';
+import { GoldButton } from '@/components/GoldButton';
+import { cn } from '@/lib/utils';
 
 interface VenustasTower3DProps {
   className?: string;
+  ctaLabel?: string;
+  onExpressInterest?: () => void;
+  personalizationHint?: string;
 }
 
-export function VenustasTower3D({ className }: VenustasTower3DProps) {
+export function VenustasTower3D({
+  className,
+  ctaLabel,
+  onExpressInterest,
+  personalizationHint,
+}: VenustasTower3DProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const { orientation, isSupported } = useDeviceOrientation();
   const orientationRef = useRef({ beta: 0, gamma: 0 });
@@ -69,6 +79,9 @@ export function VenustasTower3D({ className }: VenustasTower3DProps) {
       const accentLight = new THREE.PointLight(0x50c878, 0.6, 100);
       accentLight.position.set(-20, 50, -20);
       scene.add(accentLight);
+      const rimLight = new THREE.PointLight(0x87ceeb, 0.35, 80);
+      rimLight.position.set(18, 35, -18);
+      scene.add(rimLight);
 
       // Tower materials
       const towerMaterial = new THREE.MeshStandardMaterial({
@@ -232,8 +245,9 @@ export function VenustasTower3D({ className }: VenustasTower3DProps) {
         // Subtle tower sway
         towerGroup.rotation.y = Math.sin(time * 0.5) * 0.01;
 
-        // Animate accent light
-        accentLight.intensity = 0.6 + Math.sin(time * 3) * 0.2;
+      // Animate accent light
+      accentLight.intensity = 0.6 + Math.sin(time * 3) * 0.2;
+      rimLight.intensity = 0.35 + Math.cos(time * 2.2) * 0.15;
 
         if (renderer) {
           renderer.render(scene, camera);
@@ -293,9 +307,28 @@ export function VenustasTower3D({ className }: VenustasTower3DProps) {
   return (
     <div
       ref={containerRef}
-      className={className}
-      style={{ width: '100%', height: '100%', position: 'relative' }}
+      className={cn("relative h-full w-full", className)}
+      style={{ width: '100%', height: '100%' }}
     >
+      {onExpressInterest && (
+        <div className="pointer-events-none absolute inset-x-0 top-0 flex justify-end p-4">
+          <div className="pointer-events-auto rounded-xl border border-primary/20 bg-background/80 px-4 py-3 shadow-lg shadow-primary/20 backdrop-blur">
+            <p className="text-xs text-primary/80">
+              {personalizationHint ??
+                "Sky gardens, glass heliports, and year-round tourism revenue—anchor the Venustas story with us."}
+            </p>
+            <GoldButton
+              size="sm"
+              icon="sparkle"
+              onClick={onExpressInterest}
+              className="mt-2"
+              data-testid="cta-venustas-overlay"
+            >
+              {ctaLabel ?? "Champion Venustas Tower"}
+            </GoldButton>
+          </div>
+        </div>
+      )}
       {isLoading && !error && (
         <div className="absolute inset-0 flex items-center justify-center bg-card/50 backdrop-blur-sm">
           <div className="text-primary animate-pulse text-sm">Constructing Tower...</div>

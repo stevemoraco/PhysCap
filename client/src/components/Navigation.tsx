@@ -1,7 +1,7 @@
 import { Link } from "wouter";
 import { GoldButton } from "./GoldButton";
 import { useAuth } from "@/hooks/useAuth";
-import { Gem } from "lucide-react";
+import { BRAND } from "@/lib/brand";
 
 export function Navigation() {
   const { isAuthenticated, user } = useAuth();
@@ -11,11 +11,15 @@ export function Navigation() {
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         <Link href="/" data-testid="link-logo">
           <div className="flex items-center gap-3 hover-elevate transition-all duration-300 cursor-pointer">
-            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-              <Gem className="w-6 h-6 text-primary" />
+            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center overflow-hidden">
+              <img
+                src={BRAND.logoSrc}
+                alt={BRAND.logoAlt}
+                className="h-9 w-9 object-contain"
+              />
             </div>
-            <span className="font-serif text-xl font-bold text-foreground hidden sm:inline">
-              Physical.Capital
+            <span className="font-serif text-xl font-bold text-foreground hidden sm:inline" aria-label={BRAND.name}>
+              {BRAND.shortName}
             </span>
           </div>
         </Link>

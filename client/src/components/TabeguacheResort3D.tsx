@@ -1,24 +1,42 @@
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { useDeviceOrientation } from '@/hooks/useDeviceOrientation';
+import { useDevicePerformance } from '@/hooks/useDevicePerformance';
+import { GoldButton } from '@/components/GoldButton';
+import { cn } from '@/lib/utils';
 
 interface TabeguacheResort3DProps {
   className?: string;
+  ctaLabel?: string;
+  onExpressInterest?: () => void;
+  personalizationHint?: string;
 }
 
-export function TabeguacheResort3D({ className }: TabeguacheResort3DProps) {
+export function TabeguacheResort3D({
+  className,
+  ctaLabel,
+  onExpressInterest,
+  personalizationHint,
+}: TabeguacheResort3DProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const { orientation, isSupported } = useDeviceOrientation();
+  const devicePerf = useDevicePerformance();
   const orientationRef = useRef({ beta: 0, gamma: 0 });
   const sceneRef = useRef<{
     renderer: THREE.WebGLRenderer | null;
     animationId: number | null;
+    sparkleMaterial?: THREE.PointsMaterial;
+    sparkles?: THREE.Points;
   } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
 
   useEffect(() => {
     if (!containerRef.current) return;
+
+    let sparkleMaterial: THREE.PointsMaterial | null = null;
+    let sparkleGeometry: THREE.BufferGeometry | null = null;
+    let sparkles: THREE.Points | null = null;
 
     const container = containerRef.current;
     const width = container.clientWidth;
@@ -78,6 +96,32 @@ export function TabeguacheResort3D({ className }: TabeguacheResort3DProps) {
       const accentLight = new THREE.PointLight(0x50c878, 0.4, 40);
       accentLight.position.set(-10, 10, -10);
       scene.add(accentLight);
+
+      // Sparkle particles for premium aesthetic
+      const sparkleCount =
+        devicePerf.quality === 'low' ? 40 : devicePerf.quality === 'medium' ? 70 : 110;
+      sparkleGeometry = new THREE.BufferGeometry();
+      const sparklePositions = new Float32Array(sparkleCount * 3);
+      for (let i = 0; i < sparkleCount; i++) {
+        sparklePositions[i * 3] = (Math.random() - 0.5) * 40;
+        sparklePositions[i * 3 + 1] = 8 + Math.random() * 10;
+        sparklePositions[i * 3 + 2] = (Math.random() - 0.5) * 40;
+      }
+      sparkleGeometry.setAttribute(
+        'position',
+        new THREE.BufferAttribute(sparklePositions, 3),
+      );
+      sparkleMaterial = new THREE.PointsMaterial({
+        color: 0xd4af37,
+        size: devicePerf.quality === 'high' ? 0.35 : 0.25,
+        transparent: true,
+        opacity: 0.55,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      });
+      sparkles = new THREE.Points(sparkleGeometry, sparkleMaterial);
+      sparkles.position.y = 6;
+      scene.add(sparkles);
 
       // Mountain terrain base
       const terrainGeometry = new THREE.PlaneGeometry(100, 100, 20, 20);
@@ -264,7 +308,9 @@ export function TabeguacheResort3D({ className }: TabeguacheResort3DProps) {
       };
 
       // Scatter trees around resort
-      for (let i = 0; i < 20; i++) {
+      const treeCount =
+        devicePerf.quality === 'low' ? 12 : devicePerf.quality === 'medium' ? 18 : 26;
+      for (let i = 0; i < treeCount; i++) {
         const angle = (i / 20) * Math.PI * 2;
         const radius = 25 + Math.random() * 15;
         createTree(
@@ -300,6 +346,10 @@ export function TabeguacheResort3D({ className }: TabeguacheResort3DProps) {
 
         // Animate accent light
         accentLight.intensity = 0.4 + Math.sin(time * 2) * 0.1;
+        if (sparkles && sparkleMaterial) {
+          sparkles.rotation.y += 0.0006;
+          sparkleMaterial.opacity = 0.45 + Math.sin(time * 1.8) * 0.18;
+        }
 
         if (renderer) {
           renderer.render(scene, camera);
@@ -310,7 +360,12 @@ export function TabeguacheResort3D({ className }: TabeguacheResort3DProps) {
         }
       };
 
-      sceneRef.current = { renderer, animationId: null };
+      sceneRef.current = {
+        renderer,
+        animationId: null,
+        sparkleMaterial: sparkleMaterial ?? undefined,
+        sparkles: sparkles ?? undefined,
+      };
       setIsLoading(false);
       animate();
 
@@ -332,6 +387,11 @@ export function TabeguacheResort3D({ className }: TabeguacheResort3DProps) {
         if (sceneRef.current?.animationId) {
           cancelAnimationFrame(sceneRef.current.animationId);
         }
+        if (sparkles) {
+          scene.remove(sparkles);
+        }
+        sparkleGeometry?.dispose();
+        sparkleMaterial?.dispose();
         if (renderer) {
           renderer.dispose();
           if (container && renderer.domElement && container.contains(renderer.domElement)) {
@@ -362,9 +422,28 @@ export function TabeguacheResort3D({ className }: TabeguacheResort3DProps) {
   return (
     <div
       ref={containerRef}
-      className={className}
-      style={{ width: '100%', height: '100%', position: 'relative' }}
+      className={cn("relative h-full w-full", className)}
+      style={{ width: '100%', height: '100%' }}
     >
+      {onExpressInterest && (
+        <div className="pointer-events-none absolute inset-x-0 top-0 flex justify-end p-4">
+          <div className="pointer-events-auto rounded-xl border border-primary/20 bg-background/75 px-4 py-3 shadow-lg shadow-primary/20 backdrop-blur">
+            <p className="text-xs text-primary/80">
+              {personalizationHint ??
+                "Luxury alpine retreats with prefab precision—lock in co-development access."}
+            </p>
+            <GoldButton
+              size="sm"
+              icon="sparkle"
+              onClick={onExpressInterest}
+              className="mt-2"
+              data-testid="cta-tabeguache-overlay"
+            >
+              {ctaLabel ?? "Partner on Tabeguache"}
+            </GoldButton>
+          </div>
+        </div>
+      )}
       {isLoading && !error && (
         <div className="absolute inset-0 flex items-center justify-center bg-card/50 backdrop-blur-sm">
           <div className="text-primary animate-pulse text-sm">Building Resort...</div>

@@ -4,3 +4,7 @@ dist
 server/public
 vite.config.ts.*
 *.tar.gz
+
+# Claude Code and Codex session histories
+.claude
+.codex

@@ -24,19 +24,20 @@ export function GlimmerEffect({
   const [particles, setParticles] = useState<Particle[]>([]);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
 
-  // Initialize particles
+  // Initialize particles once on mount
   useEffect(() => {
+    const particleColors = colors || ['#d4af37', '#50c878', '#b9f2ff'];
     const newParticles: Particle[] = Array.from({ length: particleCount }, (_, i) => ({
       id: i,
       x: Math.random() * 100,
       y: Math.random() * 100,
       size: Math.random() * 4 + 1,
-      color: colors[Math.floor(Math.random() * colors.length)],
+      color: particleColors[Math.floor(Math.random() * particleColors.length)],
       opacity: Math.random() * 0.6 + 0.2,
       speed: Math.random() * 0.5 + 0.5,
     }));
     setParticles(newParticles);
-  }, [particleCount, colors]);
+  }, []); // Only initialize once on mount
 
   // Update offset based on device orientation
   useEffect(() => {

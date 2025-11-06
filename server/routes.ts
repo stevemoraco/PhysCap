@@ -132,9 +132,17 @@ export function registerRoutes(app: Express) {
       });
 
       // Send investment report email
+      if (!userProfile.email) {
+        return res.status(400).json({ message: "User email not found" });
+      }
+      
+      const userName = [userProfile.firstName, userProfile.lastName]
+        .filter(Boolean)
+        .join(' ') || 'Investor';
+      
       const emailSent = await sendInvestmentReport({
         to: userProfile.email,
-        userName: userProfile.name || 'Investor',
+        userName,
         reportContent: report,
         expertise: userProfile.expertise || 'general',
         projectsInterested: feedbackList.map(f => f.projectId),

@@ -9,6 +9,8 @@ interface GoldButtonProps {
   className?: string;
   icon?: "arrow" | "sparkle" | "none";
   size?: "default" | "lg";
+  disabled?: boolean;
+  "data-testid"?: string;
 }
 
 export function GoldButton({ 
@@ -17,7 +19,9 @@ export function GoldButton({
   variant = "primary", 
   className,
   icon = "arrow",
-  size = "default"
+  size = "default",
+  disabled = false,
+  "data-testid": dataTestId
 }: GoldButtonProps) {
   const IconComponent = icon === "arrow" ? ArrowRight : icon === "sparkle" ? Sparkles : null;
   
@@ -27,6 +31,7 @@ export function GoldButton({
         onClick={onClick}
         variant="outline"
         size={size}
+        disabled={disabled}
         className={cn(
           "border-primary text-primary hover:bg-primary/10 backdrop-blur-sm",
           "shadow-lg shadow-primary/20 transition-all duration-300",
@@ -35,7 +40,7 @@ export function GoldButton({
           size === "lg" && "px-8 py-6 text-lg",
           className
         )}
-        data-testid="button-cta-outline"
+        data-testid={dataTestId || "button-cta-outline"}
       >
         {children}
         {IconComponent && <IconComponent className="ml-2 h-4 w-4" />}
@@ -46,6 +51,7 @@ export function GoldButton({
   return (
     <Button
       onClick={onClick}
+      disabled={disabled}
       className={cn(
         "bg-gradient-to-r from-primary via-[#e5c158] to-primary bg-size-200 animate-gradient",
         "text-primary-foreground font-semibold tracking-wide",
@@ -56,7 +62,7 @@ export function GoldButton({
         className
       )}
       size={size}
-      data-testid="button-cta-primary"
+      data-testid={dataTestId || "button-cta-primary"}
     >
       {children}
       {IconComponent && <IconComponent className="ml-2 h-4 w-4" />}

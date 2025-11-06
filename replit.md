@@ -20,29 +20,57 @@ Physical.Capital is a mobile-first luxury web application showcasing cutting-edg
    - Hero section with gyroscope-responsive glimmer effects
    - Project Tavakiev showcase with full 3D solar manufacturing demo
    - Innovation cards (Golden Spike, Vitruvius, Talos, Story Engineering)
-   - Project showcase grid with 3D previews
+   - Project showcase grid with 3D previews (Tabeguache, Venustas, Yádiłhił)
    - CTA buttons throughout for engagement
+   - SEO optimization with meta tags, Open Graph, structured data
 
 2. **Home Page** (`/`) - Authenticated users
-   - Personalized dashboard
-   - Full project exploration
-   - Feedback collection
-   - AI-powered insights
+   - Personalized dashboard with activity metrics
+   - Full project exploration with all 3D demos
+   - Feedback collection modals
+   - AI-powered report generation CTA
+   - Social sharing for all projects
+
+3. **Dashboard Page** (`/dashboard`) - Authenticated users
+   - Comprehensive feedback history with timeline
+   - Activity log showing all interactions
+   - AI report generation with email delivery
+   - Project statistics and engagement metrics
+   - Tabs for organizing feedback vs activity data
 
 ### Key Components
 
-#### 3D Visualizations
+#### 3D Visualizations (All with Gyroscope Controls)
 - **SolarManufacturing3D**: Full interactive solar panel factory with:
   - 8 animated solar panels in assembly line
   - 3 golden robotic workers with articulated arms
   - Physics-based movements and rotations
   - Dynamic lighting (gold directional, emerald accent)
-  - Orbiting camera system
+  - Gyroscope-responsive camera (pan/tilt with device orientation)
 
-- **Project3DPlaceholder**: Simplified 3D previews for other projects:
-  - Tabeguache: Resort building collection
-  - Venustas: Tall tower with golden spire
-  - Yádiłhił: Orbital station with rings
+- **TabeguacheResort3D**: Luxury Colorado resort with:
+  - 6 prefab luxury cabins (2x3 grid layout)
+  - Main lodge building (large central structure)
+  - Spa building with glass features
+  - Mountain terrain with elevation changes
+  - Pine trees and natural landscaping
+  - Gyroscope-responsive camera controls
+
+- **VenustasTower3D**: World's tallest skyscraper with:
+  - 100-floor tapered tower (narrowing at top)
+  - Spiral exterior staircase wrapping around
+  - 20 hanging garden platforms
+  - Golden spire at top
+  - Reflective glass materials
+  - Gyroscope camera controls
+
+- **YadilhilOrbital3D**: First orbital apartment complex with:
+  - 2 rotating habitat rings (counter-rotating)
+  - Central docking hub
+  - 8 solar panel arrays
+  - Realistic star field background
+  - Gyroscope-responsive camera
+  - Physics-based ring rotation
 
 #### Interactive Features
 - **GlimmerEffect**: Gyroscope-responsive particle system

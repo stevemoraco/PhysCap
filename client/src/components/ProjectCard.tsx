@@ -1,5 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { GoldButton } from "./GoldButton";
+import { SocialShare } from "./SocialShare";
 import { cn } from "@/lib/utils";
 
 interface ProjectCardProps {
@@ -10,6 +11,7 @@ interface ProjectCardProps {
   onExpressInterest?: () => void;
   className?: string;
   children?: React.ReactNode;
+  projectId?: string;
 }
 
 export function ProjectCard({
@@ -20,6 +22,7 @@ export function ProjectCard({
   onExpressInterest,
   className,
   children,
+  projectId,
 }: ProjectCardProps) {
   return (
     <Card className={cn(
@@ -33,10 +36,19 @@ export function ProjectCard({
       
       {/* Content */}
       <div className="space-y-4">
-        <h3 className="font-serif text-3xl font-bold text-foreground relative inline-block">
-          {title}
-          <div className="absolute -bottom-2 left-0 h-0.5 w-0 bg-primary transition-all duration-500 group-hover:w-full" />
-        </h3>
+        <div className="flex items-start justify-between gap-4">
+          <h3 className="font-serif text-3xl font-bold text-foreground relative inline-block flex-1">
+            {title}
+            <div className="absolute -bottom-2 left-0 h-0.5 w-0 bg-primary transition-all duration-500 group-hover:w-full" />
+          </h3>
+          {projectId && (
+            <SocialShare
+              title={title}
+              description={description}
+              projectId={projectId}
+            />
+          )}
+        </div>
         
         <p className="text-muted-foreground leading-relaxed">
           {description}

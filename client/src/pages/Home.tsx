@@ -11,6 +11,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Sparkles, FileText, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import type { PageInteraction, UserReport } from "@shared/schema";
 
 export default function Home() {
   const { user } = useAuth();
@@ -24,14 +25,26 @@ export default function Home() {
   }, [trackPageVisit]);
 
   // Fetch user's recent interactions
-  const { data: interactions } = useQuery({
+  const { data: interactions } = useQuery<PageInteraction[]>({
     queryKey: ['/api/interactions', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const response = await fetch(`/api/interactions/${user.id}`);
+      if (!response.ok) throw new Error('Failed to fetch interactions');
+      return response.json();
+    },
     enabled: !!user?.id,
   });
 
   // Fetch user's latest report
-  const { data: latestReport } = useQuery({
+  const { data: latestReport } = useQuery<UserReport | null>({
     queryKey: ['/api/reports/latest', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const response = await fetch(`/api/reports/latest/${user.id}`);
+      if (!response.ok) throw new Error('Failed to fetch report');
+      return response.json();
+    },
     enabled: !!user?.id,
   });
 

@@ -63,7 +63,8 @@ export function SolarManufacturingExperience({
   }, [quality, status]);
 
   useEffect(() => {
-    if (typeof navigator === "undefined" || !(navigator as any).gpu) {
+    // Temporarily disable WebGPU until unplugin-typegpu is configured
+    if (true || typeof navigator === "undefined" || !(navigator as any).gpu) {
       setStatus("unsupported");
       onUnavailable?.();
       return;

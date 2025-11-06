@@ -6,12 +6,14 @@ import { ChevronDown, Sparkles } from "lucide-react";
 import { BRAND } from "@/lib/brand";
 import { usePersonalization } from "@/hooks/usePersonalization";
 import { useAuth } from "@/hooks/useAuth";
+import { useInteractionTracking } from "@/hooks/useInteractionTracking";
 
 export function HeroSection() {
   const { orientation } = useDeviceOrientation();
   const [parallaxOffset, setParallaxOffset] = useState({ x: 0, y: 0 });
   const { profile, getPersonalizedText } = usePersonalization();
   const { user } = useAuth();
+  const { trackCTA } = useInteractionTracking(user?.id);
 
   useEffect(() => {
     if (orientation.beta !== null && orientation.gamma !== null) {
@@ -84,6 +86,7 @@ export function HeroSection() {
           <GoldButton
             size="lg"
             onClick={() => {
+              trackCTA({ label: primaryCta, section: 'hero' });
               document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth' });
             }}
           >
@@ -92,7 +95,10 @@ export function HeroSection() {
           <GoldButton
             size="lg"
             variant="outline"
-            onClick={() => window.location.href = '/api/login'}
+            onClick={() => {
+              trackCTA({ label: secondaryCta, section: 'hero', metadata: { target: 'login' } });
+              window.location.href = '/api/login';
+            }}
           >
             {secondaryCta}
           </GoldButton>

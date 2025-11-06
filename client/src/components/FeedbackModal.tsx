@@ -9,6 +9,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Mic } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { useInteractionTracking } from "@/hooks/useInteractionTracking";
 
 interface FeedbackModalProps {
   open: boolean;
@@ -23,6 +25,8 @@ export function FeedbackModal({ open, onOpenChange, projectId, projectName }: Fe
   const [voiceCaptureOpen, setVoiceCaptureOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const { trackCTA } = useInteractionTracking(user?.id);
 
   const handleModalVisibility = (nextOpen: boolean) => {
     if (!nextOpen) {
@@ -89,7 +93,14 @@ export function FeedbackModal({ open, onOpenChange, projectId, projectName }: Fe
               variant="outline"
               icon="none"
               size="default"
-              onClick={() => setVoiceCaptureOpen(true)}
+              onClick={() => {
+                trackCTA({
+                  label: "Record Voice Feedback",
+                  section: "feedback_modal",
+                  projectId,
+                });
+                setVoiceCaptureOpen(true);
+              }}
               data-testid="button-open-voice-feedback"
               disabled={voiceCaptureOpen}
             >

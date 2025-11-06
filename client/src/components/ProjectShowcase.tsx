@@ -7,6 +7,8 @@ import { VenustasTower3D } from "./VenustasTower3D";
 import { YadilhilOrbital3D } from "./YadilhilOrbital3D";
 import { Building2, Rocket, Hotel } from "lucide-react";
 import { usePersonalization } from "@/hooks/usePersonalization";
+import { useAuth } from "@/hooks/useAuth";
+import { useInteractionTracking } from "@/hooks/useInteractionTracking";
 
 interface Project {
   id: string;
@@ -59,6 +61,17 @@ const projects: Project[] = [
 export function ProjectShowcase() {
   const [activeFeedback, setActiveFeedback] = useState<{ id: string; name: string } | null>(null);
   const { getPersonalizedText } = usePersonalization();
+  const { user } = useAuth();
+  const { trackCTA } = useInteractionTracking(user?.id);
+
+  const handleExpressInterest = (project: Project) => {
+    trackCTA({
+      label: project.ctaLabel,
+      section: 'project_showcase',
+      projectId: project.id,
+    });
+    setActiveFeedback({ id: project.id, name: project.name });
+  };
 
   return (
     <>
@@ -79,7 +92,7 @@ export function ProjectShowcase() {
                     `projects.${project.id}.hint`,
                     project.personalizationHint,
                   )}
-                  onExpressInterest={() => setActiveFeedback({ id: project.id, name: project.name })}
+                  onExpressInterest={() => handleExpressInterest(project)}
                 />
               )}
               {project.visualType === 'tower' && (
@@ -90,7 +103,7 @@ export function ProjectShowcase() {
                     `projects.${project.id}.hint`,
                     project.personalizationHint,
                   )}
-                  onExpressInterest={() => setActiveFeedback({ id: project.id, name: project.name })}
+                  onExpressInterest={() => handleExpressInterest(project)}
                 />
               )}
               {project.visualType === 'orbital' && (
@@ -101,7 +114,7 @@ export function ProjectShowcase() {
                     `projects.${project.id}.hint`,
                     project.personalizationHint,
                   )}
-                  onExpressInterest={() => setActiveFeedback({ id: project.id, name: project.name })}
+                  onExpressInterest={() => handleExpressInterest(project)}
                 />
               )}
               {/* Info overlay */}
@@ -134,7 +147,7 @@ export function ProjectShowcase() {
 
               {/* CTA */}
               <GoldButton
-                onClick={() => setActiveFeedback({ id: project.id, name: project.name })}
+                onClick={() => handleExpressInterest(project)}
                 className="w-full"
                 icon="sparkle"
               >

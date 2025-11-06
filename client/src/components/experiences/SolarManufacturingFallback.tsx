@@ -8,9 +8,13 @@ import { cn } from '@/lib/utils';
 
 interface SolarManufacturingFallbackProps {
   className?: string;
+  onObjectInteraction?: (details: { objectId: string; action: string }) => void;
 }
 
-export function SolarManufacturingFallback({ className }: SolarManufacturingFallbackProps) {
+export function SolarManufacturingFallback({
+  className,
+  onObjectInteraction,
+}: SolarManufacturingFallbackProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const { orientation, isSupported } = useDeviceOrientation();
   const devicePerf = useDevicePerformance();
@@ -310,6 +314,7 @@ export function SolarManufacturingFallback({ className }: SolarManufacturingFall
 
     const handleCanvasClick = (e: MouseEvent | TouchEvent) => {
       handleClick(e, camera, interactiveObjects, container, (object) => {
+        onObjectInteraction?.({ objectId: object.label, action: 'click' });
         zoomToObject(camera, object.mesh, 1000);
       });
     };

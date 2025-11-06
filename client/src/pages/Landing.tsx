@@ -7,19 +7,19 @@ import { InnovationsSection } from "@/components/InnovationsSection";
 import { GoldButton } from "@/components/GoldButton";
 import { GyroscopePermission } from "@/components/GyroscopePermission";
 import { SEOHead } from "@/components/SEOHead";
+import { useAuth } from "@/hooks/useAuth";
+import { useInteractionTracking } from "@/hooks/useInteractionTracking";
 
 export default function Landing() {
   const [gyroPermissionGranted, setGyroPermissionGranted] = useState(false);
+  const { user } = useAuth();
+  const { trackPageVisit, trackCTA } = useInteractionTracking(user?.id);
 
   useEffect(() => {
-    // Track page visit
-    const startTime = Date.now();
-    
-    return () => {
-      const duration = Math.floor((Date.now() - startTime) / 1000);
-      console.log(`Landing page visit duration: ${duration}s`);
-    };
-  }, []);
+    if (!user?.id) return;
+    const cleanup = trackPageVisit('/');
+    return cleanup;
+  }, [trackPageVisit, user?.id]);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -109,7 +109,10 @@ export default function Landing() {
             </p>
             <GoldButton
               size="lg"
-              onClick={() => window.location.href = '/api/login'}
+              onClick={() => {
+                trackCTA({ label: "Get Started Today", section: "landing_footer" });
+                window.location.href = '/api/login';
+              }}
               icon="sparkle"
             >
               Get Started Today

@@ -101,6 +101,20 @@ export function registerRoutes(app: Express) {
     }
   });
 
+  app.get("/api/interaction-events/:userId", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as any;
+      if (req.params.userId !== user.claims.sub) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const events = await storage.getUserInteractionEvents(req.params.userId);
+      res.json(events);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // Generate personalized AI report
   app.post("/api/reports/generate", isAuthenticated, async (req, res) => {
     try {

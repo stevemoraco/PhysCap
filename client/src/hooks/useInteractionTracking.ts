@@ -42,18 +42,19 @@ export function useInteractionTracking(userId: string | undefined) {
   }, [userId]);
 
   useEffect(() => {
-    if (!userId) return;
+    if (!userId || typeof window === 'undefined') return;
     const interval = setInterval(() => {
       sendBatch();
     }, FLUSH_INTERVAL);
 
     const handleBeforeUnload = () => {
-      if (eventBuffer.current.length > 0) {
-        navigator.sendBeacon?.(
-          '/api/interactions/batch',
-          JSON.stringify({ events: eventBuffer.current }),
-        );
+      if (eventBuffer.current.length > 0 && navigator.sendBeacon) {
+        const payload = JSON.stringify({ events: eventBuffer.current });
+        const blob = new Blob([payload], { type: 'application/json' });
+        navigator.sendBeacon('/api/interactions/batch', blob);
         eventBuffer.current = [];
+      } else if (eventBuffer.current.length > 0) {
+        void sendBatch();
       }
     };
 
@@ -171,19 +172,23 @@ export function useInteractionTracking(userId: string | undefined) {
   }, [userId, addEvent]);
 
   // Track CTA clicks
-  const trackCTA = useCallback((ctaLabel: string, projectId?: string) => {
-    if (!userId) return;
+  const trackCTA = useCallback(
+    (details: { label: string; section: string; projectId?: string; metadata?: any }) => {
+      if (!userId) return;
 
-    addEvent({
-      eventType: 'cta_click',
-      context: projectId || 'general',
-      payload: {
-        label: ctaLabel,
-        url: window.location.href,
-        timestamp: Date.now(),
-      },
-    });
-  }, [userId, addEvent]);
+      addEvent({
+        eventType: 'cta_click',
+        context: `${details.section}:${details.projectId ?? 'general'}`,
+        payload: {
+          label: details.label,
+          url: typeof window !== 'undefined' ? window.location.href : undefined,
+          timestamp: Date.now(),
+          ...details.metadata,
+        },
+      });
+    },
+    [userId, addEvent],
+  );
 
   // Track scroll depth
   const getScrollDepth = useCallback(() => {

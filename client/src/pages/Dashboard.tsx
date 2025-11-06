@@ -61,6 +61,17 @@ export default function Dashboard() {
     enabled: !!user?.id,
   });
 
+  const { data: interactionEvents, isLoading: eventsLoading } = useQuery<InteractionEvent[]>({
+    queryKey: ['/api/interaction-events', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const response = await fetch(`/api/interaction-events/${user.id}`);
+      if (!response.ok) throw new Error('Failed to fetch interaction events');
+      return response.json();
+    },
+    enabled: !!user?.id,
+  });
+
   const { data: transcripts } = useQuery<FeedbackTranscript[]>({
     queryKey: ['/api/feedback/transcripts', user?.id],
     queryFn: async () => {
@@ -149,15 +160,17 @@ export default function Dashboard() {
 
           <Card className="hover-elevate">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Page Views</CardTitle>
+              <CardTitle className="text-sm font-medium">Engagement Events</CardTitle>
               <Eye className="h-4 w-4 text-accent" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold" data-testid="text-views-count">
-                {interactionsLoading ? '...' : interactions?.length || 0}
+                {interactionsLoading || eventsLoading
+                  ? '...'
+                  : (interactions?.length || 0) + (interactionEvents?.length || 0)}
               </div>
               <p className="text-xs text-muted-foreground">
-                Total interactions tracked
+                Total page + CTA interactions captured
               </p>
             </CardContent>
           </Card>
@@ -389,40 +402,69 @@ export default function Dashboard() {
           </TabsContent>
 
           <TabsContent value="activity" className="space-y-4">
-            {interactionsLoading ? (
+            {interactionsLoading || eventsLoading ? (
               <div className="flex justify-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
-            ) : !interactions || interactions.length === 0 ? (
+            ) : ((!interactions || interactions.length === 0) &&
+              (!interactionEvents || interactionEvents.length === 0)) ? (
               <Card>
                 <CardContent className="py-12 text-center">
                   <p className="text-muted-foreground">No activity logged yet</p>
                 </CardContent>
               </Card>
             ) : (
-              interactions.slice(0, 20).map((item: any) => (
-                <Card key={item.id} className="hover-elevate" data-testid={`card-activity-${item.id}`}>
-                  <CardContent className="py-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium">{item.interactionType}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {item.pagePath} {item.sectionId && `• ${item.sectionId}`}
-                        </p>
+              <>
+                {interactions && interactions.length > 0 && interactions.slice(0, 20).map((item: any) => (
+                  <Card key={item.id} className="hover-elevate" data-testid={`card-activity-${item.id}`}>
+                    <CardContent className="py-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium">{item.interactionType}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {item.pagePath} {item.sectionId && `• ${item.sectionId}`}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {formatDistanceToNow(new Date(item.createdAt), { addSuffix: true })}
+                          </p>
+                          {item.duration && (
+                            <p className="text-xs text-muted-foreground">{item.duration}s</p>
+                          )}
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-xs text-muted-foreground flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
-                          {formatDistanceToNow(new Date(item.createdAt), { addSuffix: true })}
-                        </p>
-                        {item.duration && (
-                          <p className="text-xs text-muted-foreground">{item.duration}s</p>
-                        )}
+                    </CardContent>
+                  </Card>
+                ))}
+
+                {interactionEvents && interactionEvents.length > 0 && interactionEvents.slice(0, 15).map((event) => (
+                  <Card key={event.id} className="hover-elevate border-accent/30 bg-accent/5" data-testid={`card-event-${event.id}`}>
+                    <CardContent className="py-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium capitalize">{event.eventType.replace(/_/g, ' ')}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {event.context || 'general'}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {event.createdAt && formatDistanceToNow(new Date(event.createdAt), { addSuffix: true })}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
+                      {event.payload && (
+                        <pre className="mt-2 truncate text-[11px] text-muted-foreground/80">
+                          {JSON.stringify(event.payload)}
+                        </pre>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </>
             )}
           </TabsContent>
         </Tabs>

@@ -16,6 +16,7 @@ import { FeedbackModal } from "@/components/FeedbackModal";
 import { SocialShare } from "@/components/SocialShare";
 import { useTavakievSources } from "@/hooks/useTavakievSources";
 import { usePersonalization } from "@/hooks/usePersonalization";
+import { useInteractionTracking } from "@/hooks/useInteractionTracking";
 
 export default function ProjectTavakiev() {
   const { user } = useAuth();
@@ -24,6 +25,7 @@ export default function ProjectTavakiev() {
   const { data: tavakievSections } = useTavakievSources();
   const { profile, getPersonalizedText } = usePersonalization();
   const persona = profile?.personaSegments?.[0];
+  const { trackCTA } = useInteractionTracking(user?.id);
 
   const timelineSection = tavakievSections?.find(
     (section) => section.slug.includes("timeline") || section.data?.timeline?.length,
@@ -149,7 +151,17 @@ export default function ProjectTavakiev() {
                 <Share2 className="w-4 h-4 mr-2" />
                 Share
               </GoldButton>
-              <GoldButton onClick={() => setShowFeedback(true)} data-testid="button-provide-feedback">
+              <GoldButton
+                onClick={() => {
+                  trackCTA({
+                    label: "Provide Feedback",
+                    section: "project_tavakiev",
+                    projectId: "tavakiev",
+                  });
+                  setShowFeedback(true);
+                }}
+                data-testid="button-provide-feedback"
+              >
                 Provide Feedback
               </GoldButton>
             </div>
@@ -397,7 +409,17 @@ export default function ProjectTavakiev() {
           <p className="text-muted-foreground mb-4">
             Interested in learning more about Project Tavakiev?
           </p>
-          <GoldButton onClick={() => setShowFeedback(true)} data-testid="button-get-involved">
+          <GoldButton
+            onClick={() => {
+              trackCTA({
+                label: "Get Involved",
+                section: "project_tavakiev",
+                projectId: "tavakiev",
+              });
+              setShowFeedback(true);
+            }}
+            data-testid="button-get-involved"
+          >
             Get Involved
           </GoldButton>
         </div>

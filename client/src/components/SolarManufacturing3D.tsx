@@ -19,35 +19,46 @@ export function SolarManufacturing3D({ className }: SolarManufacturing3DProps) {
     animationId: number | null;
   } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
     if (!containerRef.current) return;
 
-    const container = containerRef.current;
-    const width = container.clientWidth;
-    const height = container.clientHeight;
+    try {
+      const container = containerRef.current;
+      const width = container.clientWidth;
+      const height = container.clientHeight;
 
-    // Scene setup
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x0a2e2c);
-    scene.fog = new THREE.Fog(0x0a2e2c, 10, 50);
+      // Scene setup
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x0a2e2c);
+      scene.fog = new THREE.Fog(0x0a2e2c, 10, 50);
 
-    // Camera setup
-    const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
-    camera.position.set(15, 10, 15);
-    camera.lookAt(0, 0, 0);
+      // Camera setup
+      const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
+      camera.position.set(15, 10, 15);
+      camera.lookAt(0, 0, 0);
 
-    // Renderer setup with GPU acceleration
-    const renderer = new THREE.WebGLRenderer({
-      antialias: true,
-      alpha: true,
-      powerPreference: 'high-performance',
-    });
-    renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    container.appendChild(renderer.domElement);
+      // Renderer setup with GPU acceleration
+      let renderer: THREE.WebGLRenderer;
+      try {
+        renderer = new THREE.WebGLRenderer({
+          antialias: true,
+          alpha: true,
+          powerPreference: 'high-performance',
+        });
+      } catch (err) {
+        console.warn('WebGL not available, 3D visualization disabled');
+        setHasError(true);
+        setIsLoading(false);
+        return;
+      }
+
+      renderer.setSize(width, height);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      container.appendChild(renderer.domElement);
 
     // Lighting - Luxurious golden ambient
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
@@ -288,6 +299,11 @@ export function SolarManufacturing3D({ className }: SolarManufacturing3DProps) {
       renderer.dispose();
       container.removeChild(renderer.domElement);
     };
+    } catch (error) {
+      console.error('3D visualization error:', error);
+      setHasError(true);
+      setIsLoading(false);
+    }
   }, []);
 
   // Update orientation ref for use in animation loop
@@ -306,12 +322,24 @@ export function SolarManufacturing3D({ className }: SolarManufacturing3DProps) {
       className={className}
       style={{ width: '100%', height: '100%', position: 'relative' }}
     >
-      {isLoading && (
+      {isLoading && !hasError && (
         <div className="absolute inset-0 flex items-center justify-center bg-card/50 backdrop-blur-sm">
           <div className="text-primary animate-pulse">Initializing 3D View...</div>
         </div>
       )}
-      {isSupported && (
+      {hasError && (
+        <div className="absolute inset-0 flex items-center justify-center bg-card/50 backdrop-blur-sm p-4">
+          <div className="text-center">
+            <div className="text-muted-foreground text-sm">
+              3D visualization unavailable
+            </div>
+            <div className="text-xs text-muted-foreground/60 mt-1">
+              WebGL is not supported in this environment
+            </div>
+          </div>
+        </div>
+      )}
+      {isSupported && !hasError && (
         <div className="absolute bottom-2 left-2 text-xs text-muted-foreground bg-card/80 px-2 py-1 rounded">
           Tilt phone to explore
         </div>

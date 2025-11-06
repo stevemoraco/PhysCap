@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
+import { useDeviceOrientation } from '@/hooks/useDeviceOrientation';
 
 interface SolarManufacturing3DProps {
   className?: string;
@@ -7,6 +8,8 @@ interface SolarManufacturing3DProps {
 
 export function SolarManufacturing3D({ className }: SolarManufacturing3DProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const { orientation, isSupported } = useDeviceOrientation();
+  const orientationRef = useRef({ beta: 0, gamma: 0 });
   const sceneRef = useRef<{
     scene: THREE.Scene;
     camera: THREE.PerspectiveCamera;
@@ -206,9 +209,18 @@ export function SolarManufacturing3D({ className }: SolarManufacturing3DProps) {
     const animate = () => {
       time += 0.01;
 
-      // Rotate camera slowly around the scene
-      camera.position.x = Math.cos(time * 0.2) * 15;
-      camera.position.z = Math.sin(time * 0.2) * 15;
+      // Base orbit position
+      const baseX = Math.cos(time * 0.2) * 15;
+      const baseZ = Math.sin(time * 0.2) * 15;
+      
+      // Apply gyroscope offset if available
+      const gyroOffsetX = (orientationRef.current.gamma / 90) * 5; // Max 5 units shift
+      const gyroOffsetY = (orientationRef.current.beta / 180) * 3; // Max 3 units shift
+      
+      // Blend auto-orbit with gyroscope control
+      camera.position.x = baseX + gyroOffsetX;
+      camera.position.y = 10 + gyroOffsetY;
+      camera.position.z = baseZ;
       camera.lookAt(0, 0, 0);
 
       // Animate panels - rising and rotating
@@ -278,6 +290,16 @@ export function SolarManufacturing3D({ className }: SolarManufacturing3DProps) {
     };
   }, []);
 
+  // Update orientation ref for use in animation loop
+  useEffect(() => {
+    if (isSupported && orientation.beta !== null && orientation.gamma !== null) {
+      orientationRef.current = {
+        beta: orientation.beta,
+        gamma: orientation.gamma,
+      };
+    }
+  }, [orientation, isSupported]);
+
   return (
     <div
       ref={containerRef}
@@ -287,6 +309,11 @@ export function SolarManufacturing3D({ className }: SolarManufacturing3DProps) {
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-card/50 backdrop-blur-sm">
           <div className="text-primary animate-pulse">Initializing 3D View...</div>
+        </div>
+      )}
+      {isSupported && (
+        <div className="absolute bottom-2 left-2 text-xs text-muted-foreground bg-card/80 px-2 py-1 rounded">
+          Tilt phone to explore
         </div>
       )}
     </div>

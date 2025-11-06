@@ -3,6 +3,7 @@ import type { Express } from "express";
 import { isAuthenticated } from "./replitAuth";
 import { storage } from "./storage";
 import { generatePersonalizedReport } from "./openai";
+import { sendInvestmentReport } from "./email";
 import { insertFeedbackSchema, insertPageInteractionSchema } from "@shared/schema";
 
 export function registerRoutes(app: Express) {
@@ -130,11 +131,21 @@ export function registerRoutes(app: Express) {
         emailSent: false,
       });
 
-      // TODO: In production, send email with report using a service like SendGrid
-      // For now, we'll mark it as sent immediately
-      await storage.updateReportEmailStatus(newReport.id, true);
+      // Send investment report email
+      const emailSent = await sendInvestmentReport({
+        to: userProfile.email,
+        userName: userProfile.name || 'Investor',
+        reportContent: report,
+        expertise: userProfile.expertise || 'general',
+        projectsInterested: feedbackList.map(f => f.projectId),
+      });
 
-      res.json(newReport);
+      // Update email sent status
+      if (emailSent) {
+        await storage.updateReportEmailStatus(newReport.id, true);
+      }
+
+      res.json({ ...newReport, emailSent });
     } catch (error: any) {
       console.error('Report generation error:', error);
       res.status(500).json({ message: error.message });

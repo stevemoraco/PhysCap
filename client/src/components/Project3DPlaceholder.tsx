@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
+import { useDeviceOrientation } from '@/hooks/useDeviceOrientation';
 
 interface Project3DPlaceholderProps {
   projectType: 'resort' | 'tower' | 'orbital';
@@ -8,6 +9,8 @@ interface Project3DPlaceholderProps {
 
 export function Project3DPlaceholder({ projectType, className }: Project3DPlaceholderProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const { orientation, isSupported } = useDeviceOrientation();
+  const orientationRef = useRef({ beta: 0, gamma: 0 });
   const sceneRef = useRef<{
     renderer: THREE.WebGLRenderer | null;
     animationId: number | null;
@@ -130,9 +133,21 @@ export function Project3DPlaceholder({ projectType, className }: Project3DPlaceh
       const animate = () => {
         time += 0.01;
         mainObject.rotation.y = time * 0.5;
-        camera.position.x = Math.cos(time * 0.3) * 8;
-        camera.position.z = Math.sin(time * 0.3) * 8;
+        
+        // Base orbit position
+        const baseX = Math.cos(time * 0.3) * 8;
+        const baseZ = Math.sin(time * 0.3) * 8;
+        
+        // Apply gyroscope offset if available
+        const gyroOffsetX = (orientationRef.current.gamma / 90) * 3; // Max 3 units shift
+        const gyroOffsetY = (orientationRef.current.beta / 180) * 2; // Max 2 units shift
+        
+        // Blend auto-orbit with gyroscope control
+        camera.position.x = baseX + gyroOffsetX;
+        camera.position.y = 6 + gyroOffsetY;
+        camera.position.z = baseZ;
         camera.lookAt(0, 0, 0);
+        
         accentLight.intensity = 0.5 + Math.sin(time * 2) * 0.2;
 
         if (renderer) {
@@ -183,6 +198,16 @@ export function Project3DPlaceholder({ projectType, className }: Project3DPlaceh
     }
   }, [projectType]);
 
+  // Update orientation ref for use in animation loop
+  useEffect(() => {
+    if (isSupported && orientation.beta !== null && orientation.gamma !== null) {
+      orientationRef.current = {
+        beta: orientation.beta,
+        gamma: orientation.gamma,
+      };
+    }
+  }, [orientation, isSupported]);
+
   return (
     <div
       ref={containerRef}
@@ -197,6 +222,11 @@ export function Project3DPlaceholder({ projectType, className }: Project3DPlaceh
       {error && (
         <div className="absolute inset-0 flex items-center justify-center bg-card/50 backdrop-blur-sm">
           <div className="text-muted-foreground text-xs">3D preview unavailable</div>
+        </div>
+      )}
+      {isSupported && !isLoading && !error && (
+        <div className="absolute bottom-1 right-1 text-xs text-muted-foreground/70 bg-card/60 px-1.5 py-0.5 rounded">
+          Tilt to explore
         </div>
       )}
     </div>

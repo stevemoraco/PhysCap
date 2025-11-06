@@ -1,12 +1,15 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Navigation } from "@/components/Navigation";
 import { HeroSection } from "@/components/HeroSection";
 import { ProjectTavakiev } from "@/components/ProjectTavakiev";
 import { ProjectShowcase } from "@/components/ProjectShowcase";
 import { InnovationsSection } from "@/components/InnovationsSection";
 import { GoldButton } from "@/components/GoldButton";
+import { GyroscopePermission } from "@/components/GyroscopePermission";
 
 export default function Landing() {
+  const [gyroPermissionGranted, setGyroPermissionGranted] = useState(false);
+
   useEffect(() => {
     // Track page visit
     const startTime = Date.now();
@@ -19,6 +22,7 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <GyroscopePermission onPermissionGranted={() => setGyroPermissionGranted(true)} />
       <Navigation />
 
       {/* Hero Section */}

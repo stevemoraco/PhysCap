@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { GoldButton } from "./GoldButton";
+import { GlimmerEffect } from "./GlimmerEffect";
 import { useDeviceOrientation } from "@/hooks/useDeviceOrientation";
 import { ChevronDown, Gem } from "lucide-react";
 
@@ -23,21 +24,8 @@ export function HeroSection() {
       {/* Animated gradient background */}
       <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-primary/5" />
       
-      {/* Golden particles effect */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {[...Array(30)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute w-1 h-1 bg-primary rounded-full opacity-20 animate-pulse"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 3}s`,
-              animationDuration: `${2 + Math.random() * 2}s`,
-            }}
-          />
-        ))}
-      </div>
+      {/* Gyroscope-responsive glimmer particles (gold, emerald, diamond) */}
+      <GlimmerEffect particleCount={40} />
 
       {/* Content */}
       <div className="relative z-10 container mx-auto px-4 py-32 text-center">

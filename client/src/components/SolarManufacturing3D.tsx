@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { useDeviceOrientation } from '@/hooks/useDeviceOrientation';
+import { use3DInteraction, type InteractiveObject } from '@/hooks/use3DInteraction';
+import { TooltipOverlay3D } from './TooltipOverlay3D';
 
 interface SolarManufacturing3DProps {
   className?: string;
@@ -16,10 +18,12 @@ export function SolarManufacturing3D({ className }: SolarManufacturing3DProps) {
     renderer: THREE.WebGLRenderer;
     panels: THREE.Mesh[];
     robots: THREE.Group[];
+    panelGroups: THREE.Group[];
     animationId: number | null;
   } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const { tooltip, handleClick, handleMouseMove, zoomToObject, clearTooltip } = use3DInteraction();
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -120,6 +124,7 @@ export function SolarManufacturing3D({ className }: SolarManufacturing3DProps) {
 
     // Create solar panels
     const panels: THREE.Mesh[] = [];
+    const panelGroups: THREE.Group[] = [];
     const panelCount = 8;
 
     for (let i = 0; i < panelCount; i++) {
@@ -163,6 +168,7 @@ export function SolarManufacturing3D({ className }: SolarManufacturing3DProps) {
 
       scene.add(panelGroup);
       panels.push(frame);
+      panelGroups.push(panelGroup);
     }
 
     // Create robots (simplified humanoid forms)
@@ -272,11 +278,39 @@ export function SolarManufacturing3D({ className }: SolarManufacturing3DProps) {
       renderer,
       panels,
       robots,
+      panelGroups,
       animationId: null,
     };
 
     setIsLoading(false);
     animate();
+
+    const interactiveObjects: InteractiveObject[] = [
+      ...panelGroups.map((group, i) => ({
+        mesh: group,
+        label: `Solar Panel #${i + 1}`,
+        description: 'High-efficiency photovoltaic panel with 60-cell grid and anti-reflective glass coating',
+      })),
+      ...robots.map((robot, i) => ({
+        mesh: robot,
+        label: `Assembly Robot #${i + 1}`,
+        description: 'Autonomous robotic worker with precision articulated arms for panel assembly',
+      })),
+    ];
+
+    const handleCanvasClick = (e: MouseEvent | TouchEvent) => {
+      handleClick(e, camera, interactiveObjects, container, (object) => {
+        zoomToObject(camera, object.mesh, 1000);
+      });
+    };
+
+    const handleCanvasMouseMove = (e: MouseEvent) => {
+      handleMouseMove(e, camera, interactiveObjects, container);
+    };
+
+    renderer.domElement.addEventListener('click', handleCanvasClick as any);
+    renderer.domElement.addEventListener('touchstart', handleCanvasClick as any);
+    renderer.domElement.addEventListener('mousemove', handleCanvasMouseMove);
 
     // Handle resize
     const handleResize = () => {
@@ -293,6 +327,9 @@ export function SolarManufacturing3D({ className }: SolarManufacturing3DProps) {
     // Cleanup
     return () => {
       window.removeEventListener('resize', handleResize);
+      renderer.domElement.removeEventListener('click', handleCanvasClick as any);
+      renderer.domElement.removeEventListener('touchstart', handleCanvasClick as any);
+      renderer.domElement.removeEventListener('mousemove', handleCanvasMouseMove);
       if (sceneRef.current?.animationId) {
         cancelAnimationFrame(sceneRef.current.animationId);
       }
@@ -339,9 +376,17 @@ export function SolarManufacturing3D({ className }: SolarManufacturing3DProps) {
           </div>
         </div>
       )}
-      {isSupported && !hasError && (
+      {tooltip && (
+        <TooltipOverlay3D tooltip={tooltip} onClose={clearTooltip} />
+      )}
+      {isSupported && !hasError && !isLoading && (
         <div className="absolute bottom-2 left-2 text-xs text-muted-foreground bg-card/80 px-2 py-1 rounded">
-          Tilt phone to explore
+          Tilt phone to explore • Click to zoom
+        </div>
+      )}
+      {!isSupported && !hasError && !isLoading && (
+        <div className="absolute bottom-2 left-2 text-xs text-muted-foreground bg-card/80 px-2 py-1 rounded">
+          Click objects to zoom in
         </div>
       )}
     </div>

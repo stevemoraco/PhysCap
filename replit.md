@@ -40,13 +40,14 @@ Physical.Capital is a mobile-first luxury web application showcasing cutting-edg
 
 ### Key Components
 
-#### 3D Visualizations (All with Gyroscope Controls)
+#### 3D Visualizations (All with Gyroscope Controls & Click-to-Explore)
 - **SolarManufacturing3D**: Full interactive solar panel factory with:
-  - 8 animated solar panels in assembly line
-  - 3 golden robotic workers with articulated arms
+  - 8 animated solar panels in assembly line (clickable with info tooltips)
+  - 3 golden robotic workers with articulated arms (clickable)
   - Physics-based movements and rotations
   - Dynamic lighting (gold directional, emerald accent)
   - Gyroscope-responsive camera (pan/tilt with device orientation)
+  - Click-to-zoom functionality on all panels and robots
 
 - **TabeguacheResort3D**: Luxury Colorado resort with:
   - 6 prefab luxury cabins (2x3 grid layout)
@@ -73,6 +74,13 @@ Physical.Capital is a mobile-first luxury web application showcasing cutting-edg
   - Physics-based ring rotation
 
 #### Interactive Features
+- **3D Click-to-Explore** (`use3DInteraction` hook):
+  - Raycasting-based object detection (mouse/touch)
+  - Automatic camera zoom to clicked objects
+  - Interactive info tooltips with component details
+  - Hover cursor changes for interactive elements
+  - Works seamlessly with gyroscope controls
+
 - **GlimmerEffect**: Gyroscope-responsive particle system
   - 40+ particles (gold, emerald, diamond colors)
   - Device orientation tracking (beta/gamma angles)
@@ -86,6 +94,7 @@ Physical.Capital is a mobile-first luxury web application showcasing cutting-edg
 #### UI Components
 - **GoldButton**: Primary CTA with two variants (primary, outline)
 - **ProjectCard**: Showcases projects with metrics and CTAs
+- **TooltipOverlay3D**: Floating tooltips for 3D object information
 - **Navigation**: Fixed header with auth state
 - **ErrorBoundary**: Graceful error handling
 

@@ -2,7 +2,9 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { GoldButton } from "./GoldButton";
 import { FeedbackModal } from "./FeedbackModal";
-import { Project3DPlaceholder } from "./Project3DPlaceholder";
+import { TabeguacheResort3D } from "./TabeguacheResort3D";
+import { VenustasTower3D } from "./VenustasTower3D";
+import { YadilhilOrbital3D } from "./YadilhilOrbital3D";
 import { Building2, Rocket, Hotel } from "lucide-react";
 
 interface Project {
@@ -59,10 +61,12 @@ export function ProjectShowcase() {
           >
             {/* 3D Visualization */}
             <div className="relative h-48 bg-gradient-to-br from-card to-primary/10 border-b border-primary/20">
-              <Project3DPlaceholder projectType={project.visualType} className="w-full h-full" />
+              {project.visualType === 'resort' && <TabeguacheResort3D className="w-full h-full" />}
+              {project.visualType === 'tower' && <VenustasTower3D className="w-full h-full" />}
+              {project.visualType === 'orbital' && <YadilhilOrbital3D className="w-full h-full" />}
               {/* Info overlay */}
               <div className="absolute top-3 right-3 bg-card/90 backdrop-blur-sm px-2 py-1 rounded text-xs text-primary border border-primary/20">
-                3D Preview
+                Interactive 3D
               </div>
             </div>
 

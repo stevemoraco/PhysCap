@@ -6,6 +6,7 @@ import { ProjectShowcase } from "@/components/ProjectShowcase";
 import { InnovationsSection } from "@/components/InnovationsSection";
 import { GoldButton } from "@/components/GoldButton";
 import { GyroscopePermission } from "@/components/GyroscopePermission";
+import { SEOHead } from "@/components/SEOHead";
 
 export default function Landing() {
   const [gyroPermissionGranted, setGyroPermissionGranted] = useState(false);
@@ -22,6 +23,22 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <SEOHead 
+        title="Physical.Capital - GPU-Accelerated Infrastructure Investment Platform"
+        description="Explore cutting-edge infrastructure projects with interactive 3D visualizations: 2 GW solar gigafactory, Colorado luxury resorts, world's tallest skyscraper, and orbital apartments. Mobile-first with gyroscope controls."
+        keywords={[
+          "infrastructure investment",
+          "3D project visualization",
+          "solar gigafactory",
+          "Tabeguache resort",
+          "Venustas Tower",
+          "orbital apartments",
+          "gyroscope visualization",
+          "GPU accelerated 3D",
+          "Physical Capital",
+          "Colorado infrastructure"
+        ]}
+      />
       <GyroscopePermission onPermissionGranted={() => setGyroPermissionGranted(true)} />
       <Navigation />
 

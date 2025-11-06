@@ -9,6 +9,7 @@ import NotFound from "@/pages/not-found";
 import Landing from "@/pages/Landing";
 import Home from "@/pages/Home";
 import Dashboard from "@/pages/Dashboard";
+import ProjectTavakiev from "@/pages/ProjectTavakiev";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -23,6 +24,7 @@ function Router() {
           <Route path="/dashboard" component={Dashboard} />
         </>
       )}
+      <Route path="/project/tavakiev" component={ProjectTavakiev} />
       <Route component={NotFound} />
     </Switch>
   );

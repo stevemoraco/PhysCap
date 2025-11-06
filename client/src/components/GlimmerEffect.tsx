@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useDeviceOrientation } from '@/hooks/useDeviceOrientation';
+import { useDevicePerformance } from '@/hooks/useDevicePerformance';
 
 interface Particle {
   id: number;
@@ -17,17 +18,21 @@ interface GlimmerEffectProps {
 }
 
 export function GlimmerEffect({ 
-  particleCount = 30,
+  particleCount,
   colors = ['#d4af37', '#50c878', '#b9f2ff'] // gold, emerald, diamond
 }: GlimmerEffectProps) {
   const { orientation, isSupported } = useDeviceOrientation();
+  const devicePerf = useDevicePerformance();
   const [particles, setParticles] = useState<Particle[]>([]);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
+
+  // Use adaptive particle count based on device performance
+  const adaptiveParticleCount = particleCount || devicePerf.maxParticles;
 
   // Initialize particles once on mount
   useEffect(() => {
     const particleColors = colors || ['#d4af37', '#50c878', '#b9f2ff'];
-    const newParticles: Particle[] = Array.from({ length: particleCount }, (_, i) => ({
+    const newParticles: Particle[] = Array.from({ length: adaptiveParticleCount }, (_, i) => ({
       id: i,
       x: Math.random() * 100,
       y: Math.random() * 100,
@@ -37,7 +42,7 @@ export function GlimmerEffect({
       speed: Math.random() * 0.5 + 0.5,
     }));
     setParticles(newParticles);
-  }, []); // Only initialize once on mount
+  }, [adaptiveParticleCount]); // Re-initialize if particle count changes
 
   // Update offset based on device orientation
   useEffect(() => {

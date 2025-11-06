@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { useDeviceOrientation } from '@/hooks/useDeviceOrientation';
+import { useDevicePerformance } from '@/hooks/useDevicePerformance';
 import { use3DInteraction, type InteractiveObject } from '@/hooks/use3DInteraction';
 import { TooltipOverlay3D } from './TooltipOverlay3D';
 
@@ -11,6 +12,7 @@ interface SolarManufacturing3DProps {
 export function SolarManufacturing3D({ className }: SolarManufacturing3DProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const { orientation, isSupported } = useDeviceOrientation();
+  const devicePerf = useDevicePerformance();
   const orientationRef = useRef({ beta: 0, gamma: 0 });
   const sceneRef = useRef<{
     scene: THREE.Scene;
@@ -43,13 +45,13 @@ export function SolarManufacturing3D({ className }: SolarManufacturing3DProps) {
       camera.position.set(15, 10, 15);
       camera.lookAt(0, 0, 0);
 
-      // Renderer setup with GPU acceleration
+      // Renderer setup with GPU acceleration and adaptive quality
       let renderer: THREE.WebGLRenderer;
       try {
         renderer = new THREE.WebGLRenderer({
-          antialias: true,
+          antialias: devicePerf.antialiasEnabled,
           alpha: true,
-          powerPreference: 'high-performance',
+          powerPreference: devicePerf.quality === 'high' ? 'high-performance' : 'default',
         });
       } catch (err) {
         console.warn('WebGL not available, 3D visualization disabled');
@@ -59,9 +61,11 @@ export function SolarManufacturing3D({ className }: SolarManufacturing3DProps) {
       }
 
       renderer.setSize(width, height);
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-      renderer.shadowMap.enabled = true;
-      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.setPixelRatio(devicePerf.pixelRatio);
+      renderer.shadowMap.enabled = devicePerf.shadowsEnabled;
+      if (devicePerf.shadowsEnabled) {
+        renderer.shadowMap.type = devicePerf.quality === 'high' ? THREE.PCFSoftShadowMap : THREE.BasicShadowMap;
+      }
       container.appendChild(renderer.domElement);
 
     // Lighting - Luxurious golden ambient
@@ -71,9 +75,12 @@ export function SolarManufacturing3D({ className }: SolarManufacturing3DProps) {
     // Main golden light
     const mainLight = new THREE.DirectionalLight(0xd4af37, 0.8);
     mainLight.position.set(10, 15, 10);
-    mainLight.castShadow = true;
-    mainLight.shadow.mapSize.width = 2048;
-    mainLight.shadow.mapSize.height = 2048;
+    mainLight.castShadow = devicePerf.shadowsEnabled;
+    if (devicePerf.shadowsEnabled) {
+      const shadowMapSize = devicePerf.quality === 'high' ? 2048 : 1024;
+      mainLight.shadow.mapSize.width = shadowMapSize;
+      mainLight.shadow.mapSize.height = shadowMapSize;
+    }
     scene.add(mainLight);
 
     // Accent emerald light
@@ -122,10 +129,10 @@ export function SolarManufacturing3D({ className }: SolarManufacturing3DProps) {
       }),
     };
 
-    // Create solar panels
+    // Create solar panels (adaptive count based on device performance)
     const panels: THREE.Mesh[] = [];
     const panelGroups: THREE.Group[] = [];
-    const panelCount = 8;
+    const panelCount = devicePerf.quality === 'low' ? 4 : devicePerf.quality === 'medium' ? 6 : 8;
 
     for (let i = 0; i < panelCount; i++) {
       const panelGroup = new THREE.Group();
@@ -136,15 +143,17 @@ export function SolarManufacturing3D({ className }: SolarManufacturing3DProps) {
       frame.castShadow = true;
       panelGroup.add(frame);
 
-      // Solar cells (grid pattern)
-      for (let row = 0; row < 6; row++) {
-        for (let col = 0; col < 10; col++) {
+      // Solar cells (grid pattern - adaptive detail)
+      const cellRows = devicePerf.quality === 'low' ? 3 : devicePerf.quality === 'medium' ? 4 : 6;
+      const cellCols = devicePerf.quality === 'low' ? 5 : devicePerf.quality === 'medium' ? 7 : 10;
+      for (let row = 0; row < cellRows; row++) {
+        for (let col = 0; col < cellCols; col++) {
           const cellGeometry = new THREE.BoxGeometry(0.18, 0.02, 0.09);
           const cell = new THREE.Mesh(cellGeometry, panelMaterials.cells);
           cell.position.set(
-            (col - 4.5) * 0.19,
+            (col - (cellCols - 1) / 2) * 0.19,
             0.04,
-            (row - 2.5) * 0.16
+            (row - (cellRows - 1) / 2) * 0.16
           );
           panelGroup.add(cell);
         }

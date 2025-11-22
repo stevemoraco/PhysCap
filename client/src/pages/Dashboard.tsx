@@ -456,11 +456,11 @@ export default function Dashboard() {
                           </p>
                         </div>
                       </div>
-                      {event.payload && (
+                      {event.payload ? (
                         <pre className="mt-2 truncate text-[11px] text-muted-foreground/80">
-                          {JSON.stringify(event.payload) as any}
+                          {String(JSON.stringify(event.payload))}
                         </pre>
-                      )}
+                      ) : null}
                     </CardContent>
                   </Card>
                 ))}

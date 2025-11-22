@@ -132,8 +132,9 @@ describe('use3DInteraction', () => {
 
   it('executes zoom animation', () => {
     const { result } = renderHook(() => use3DInteraction());
+    let rafCallback: FrameRequestCallback | null = null;
     const mockRAF = vi.spyOn(window, 'requestAnimationFrame').mockImplementation((cb) => {
-      cb(0);
+      rafCallback = cb;
       return 0;
     });
 
@@ -144,6 +145,14 @@ describe('use3DInteraction', () => {
     });
 
     expect(mockRAF).toHaveBeenCalled();
+
+    // Optionally call the callback once to test one frame
+    if (rafCallback) {
+      act(() => {
+        rafCallback(performance.now() + 1000); // Simulate completion with large timestamp
+      });
+    }
+
     mockRAF.mockRestore();
   });
 

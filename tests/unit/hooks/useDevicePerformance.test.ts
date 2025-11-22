@@ -81,11 +81,21 @@ describe('useDevicePerformance', () => {
     ];
 
     testCases.forEach(testCase => {
+      // Reset deviceMemory first
+      if ('deviceMemory' in navigator) {
+        delete (navigator as any).deviceMemory;
+      }
+
       if (testCase.isLowEnd) {
         Object.defineProperty(window, 'innerWidth', { writable: true, value: 360 });
         Object.defineProperty(navigator, 'userAgent', {
           writable: true,
           value: 'Mozilla/5.0 (iPhone; CPU iPhone 6 OS 12_0 like Mac OS X)',
+        });
+        Object.defineProperty(navigator, 'deviceMemory', {
+          writable: true,
+          configurable: true,
+          value: 2,
         });
       } else if (testCase.isMobile) {
         Object.defineProperty(window, 'innerWidth', { writable: true, value: 390 });
@@ -93,11 +103,22 @@ describe('useDevicePerformance', () => {
           writable: true,
           value: 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X)',
         });
+        // Ensure deviceMemory is high enough to not be considered low-end
+        Object.defineProperty(navigator, 'deviceMemory', {
+          writable: true,
+          configurable: true,
+          value: 4,
+        });
       } else {
         Object.defineProperty(window, 'innerWidth', { writable: true, value: 1920 });
         Object.defineProperty(navigator, 'userAgent', {
           writable: true,
           value: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+        });
+        Object.defineProperty(navigator, 'deviceMemory', {
+          writable: true,
+          configurable: true,
+          value: 8,
         });
       }
 

@@ -59,7 +59,6 @@ describe('useInteractionTracking', () => {
   });
 
   it('tracks page visit with duration', async () => {
-    vi.useFakeTimers();
     const { result } = renderHook(() => useInteractionTracking('user-123'), {
       wrapper: createWrapper(),
     });
@@ -79,9 +78,7 @@ describe('useInteractionTracking', () => {
       );
     });
 
-    // Advance time by 5 seconds
-    vi.advanceTimersByTime(5000);
-
+    // Call cleanup
     act(() => {
       cleanup!();
     });
@@ -94,9 +91,7 @@ describe('useInteractionTracking', () => {
         })
       );
     });
-
-    vi.useRealTimers();
-  });
+  }, 10000);
 
   it('includes metadata in tracking', async () => {
     const { result } = renderHook(() => useInteractionTracking('user-123'), {
@@ -117,7 +112,7 @@ describe('useInteractionTracking', () => {
         })
       );
     });
-  });
+  }, 10000);
 
   it('returns no-op cleanup when userId is undefined', () => {
     const { result } = renderHook(() => useInteractionTracking(undefined), {

@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import request from 'supertest';
 import express, { Express } from 'express';
-import { registerRoutes } from '@/../server/routes';
+import { registerRoutes } from '@server/routes';
 
 // Mock dependencies
-vi.mock('@/../server/replitAuth', () => ({
+vi.mock('@server/replitAuth', () => ({
   isAuthenticated: (req: any, res: any, next: any) => {
     req.user = {
       claims: { sub: 'test-user-123' },
@@ -13,7 +13,7 @@ vi.mock('@/../server/replitAuth', () => ({
   },
 }));
 
-vi.mock('@/../server/storage', () => ({
+vi.mock('@server/storage', () => ({
   storage: {
     getUser: vi.fn(() =>
       Promise.resolve({
@@ -54,7 +54,7 @@ vi.mock('@/../server/storage', () => ({
   },
 }));
 
-vi.mock('@/../server/openai', () => ({
+vi.mock('@server/openai', () => ({
   generatePersonalizedReport: vi.fn(() =>
     Promise.resolve({
       report: 'Personalized investment report',
@@ -64,8 +64,37 @@ vi.mock('@/../server/openai', () => ({
   ),
 }));
 
-vi.mock('@/../server/email', () => ({
+vi.mock('@server/email', () => ({
   sendInvestmentReport: vi.fn(() => Promise.resolve(true)),
+}));
+
+vi.mock('@server/services/reportGenerator', () => ({
+  generatePersonalizedReport: vi.fn(() =>
+    Promise.resolve({
+      reportContent: 'Generated report',
+      recommendedProjects: ['tavakiev'],
+      insights: {
+        behavioralInsights: {
+          expertiseShared: ['fintech'],
+        },
+      },
+    })
+  ),
+}));
+
+vi.mock('@server/services/voiceTranscription', () => ({
+  processVoiceFeedback: vi.fn(() =>
+    Promise.resolve({
+      transcript: 'Voice feedback transcript',
+      expertise: { keywords: ['solar', 'energy'] },
+      summary: 'Great project!',
+    })
+  ),
+}));
+
+vi.mock('@server/services/personalizationService', () => ({
+  generatePersonalizedContent: vi.fn((content) => Promise.resolve(content)),
+  generateUserCopyBundle: vi.fn(() => Promise.resolve({})),
 }));
 
 describe('API Routes Integration Tests', () => {

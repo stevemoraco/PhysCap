@@ -109,8 +109,8 @@ export async function generatePersonalizedContent(
   const persona = determinePersona(userProfile);
 
   // Try to use pre-cached copy first
-  if (context === 'hero' && PersonalizedCopy.hero[persona]) {
-    return JSON.stringify(PersonalizedCopy.hero[persona]);
+  if (context === 'hero' && (PersonalizedCopy.hero as any)[persona]) {
+    return JSON.stringify((PersonalizedCopy.hero as any)[persona]);
   }
 
   if (projectId && PersonalizedCopy[`project-${projectId}` as keyof typeof PersonalizedCopy]) {
@@ -162,8 +162,8 @@ export async function generateUserCopyBundle(
   const bundle: Record<string, string> = {};
 
   // Hero section
-  if (PersonalizedCopy.hero[persona]) {
-    const heroCopy = PersonalizedCopy.hero[persona];
+  if ((PersonalizedCopy.hero as any)[persona]) {
+    const heroCopy = (PersonalizedCopy.hero as any)[persona];
     bundle['hero.headline'] = heroCopy.headline;
     bundle['hero.subheading'] = heroCopy.subheading;
     bundle['hero.cta'] = heroCopy.cta;

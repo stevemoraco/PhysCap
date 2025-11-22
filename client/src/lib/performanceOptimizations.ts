@@ -11,7 +11,7 @@ export type GPUTier = 'high' | 'medium' | 'low';
 
 export function detectGPUTier(): GPUTier {
   // Check for WebGPU support (high-end)
-  if ('gpu' in navigator) {
+  if ('gpu' in navigator && (navigator as any).gpu) {
     return 'high';
   }
 
@@ -40,7 +40,7 @@ export function detectGPUTier(): GPUTier {
   }
 
   // Check hardware concurrency as fallback
-  const cores = navigator.hardwareConcurrency || 2;
+  const cores = (navigator as Navigator).hardwareConcurrency || 2;
   if (cores >= 8) return 'high';
   if (cores >= 4) return 'medium';
   return 'low';
@@ -212,12 +212,13 @@ export function disposeThreeJSObject(obj: THREE.Object3D): void {
 }
 
 function disposeMaterial(material: THREE.Material): void {
-  if ('map' in material && material.map) material.map.dispose();
-  if ('lightMap' in material && material.lightMap) material.lightMap.dispose();
-  if ('bumpMap' in material && material.bumpMap) material.bumpMap.dispose();
-  if ('normalMap' in material && material.normalMap) material.normalMap.dispose();
-  if ('specularMap' in material && material.specularMap) material.specularMap.dispose();
-  if ('envMap' in material && material.envMap) material.envMap.dispose();
+  const mat = material as any;
+  if ('map' in material && mat.map) mat.map.dispose();
+  if ('lightMap' in material && mat.lightMap) mat.lightMap.dispose();
+  if ('bumpMap' in material && mat.bumpMap) mat.bumpMap.dispose();
+  if ('normalMap' in material && mat.normalMap) mat.normalMap.dispose();
+  if ('specularMap' in material && mat.specularMap) mat.specularMap.dispose();
+  if ('envMap' in material && mat.envMap) mat.envMap.dispose();
   material.dispose();
 }
 

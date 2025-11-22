@@ -1,5 +1,7 @@
 // TypeGPU imports - used at runtime for shader generation
 // Note: TypeGPU is primarily a runtime library, type definitions may be limited
+import tgpu from 'typegpu';
+import * as d from 'typegpu/data';
 
 /**
  * Core WebGPU rendering pipeline using TypeGPU
@@ -33,10 +35,10 @@ export interface SceneUniforms {
  */
 export const createCamera = (root: any) => {
   return root
-    .fn([tgpu.f32, tgpu.f32], tgpu.vec3f)
+    .fn([d.f32, d.f32], d.vec3f)
     .does((u: any, v: any) => {
       // Ray direction from camera
-      return tgpu.vec3f(u, v, -1.0).normalize();
+      return d.vec3f(u, v, -1.0).normalize();
     })
     .$uses({
       // Camera uniforms would be injected here
@@ -50,7 +52,7 @@ export const SceneSDFs = {
   // Solar panel (box shape)
   solarPanel: (p: any, size: any) => {
     const q = p.abs().sub(size);
-    return q.max(tgpu.vec3f(0.0)).length().add(
+    return q.max(d.vec3f(0.0)).length().add(
       q.x.max(q.y.max(q.z)).min(0.0)
     );
   },
@@ -62,11 +64,11 @@ export const SceneSDFs = {
 
   // Cylinder for robot arms
   cylinder: (p: any, h: number, r: number) => {
-    const d = tgpu.vec2f(
-      tgpu.vec2f(p.x, p.z).length().sub(r),
+    const dist = d.vec2f(
+      d.vec2f(p.x, p.z).length().sub(r),
       p.y.abs().sub(h)
     );
-    return d.x.max(d.y).min(0.0).add(d.max(tgpu.vec2f(0.0)).length());
+    return dist.x.max(dist.y).min(0.0).add(dist.max(d.vec2f(0.0)).length());
   },
 
   // Floor plane
@@ -76,8 +78,8 @@ export const SceneSDFs = {
 
   // Torus for decorative elements
   torus: (p: any, t: any) => {
-    const q = tgpu.vec2f(
-      tgpu.vec2f(p.x, p.z).length().sub(t.x),
+    const q = d.vec2f(
+      d.vec2f(p.x, p.z).length().sub(t.x),
       p.y
     );
     return q.length().sub(t.y);

@@ -138,7 +138,7 @@ export default function InnovationStoryEngineering() {
               className="flex-1"
               data-testid="chat-input"
             />
-            <GoldButton onClick={handleSend} size="icon" data-testid="send-message">
+            <GoldButton onClick={handleSend} size="sm" icon="none" data-testid="send-message">
               <Send className="w-4 h-4" />
             </GoldButton>
           </div>

@@ -5,6 +5,11 @@ server/public
 vite.config.ts.*
 *.tar.gz
 
+# Test outputs
+playwright-report/
+test-results/
+coverage/
+
 # Claude Code and Codex session histories
 .claude
 .codex
